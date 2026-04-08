@@ -1,22 +1,31 @@
-# LEAD: Linear Encoder with Dependency Expert
+# uLEAD-TabPFN: Uncertainty-aware Dependency-based Anomaly Detection with TabPFN
 
-LEAD is an unsupervised anomaly detection method that combines a linear encoder with a TabPFN-based dependency expert. It learns a compact latent representation in which each dimension is predictable from the others under normal conditions; anomalies are identified as points where these learned dependencies break down.
-
-## Architecture
-
-```
-X (d dims)
-  └─► Linear Encoder ──► z (p dims) ──► Dependency Expert ──► Anomaly Score
-         (trained with                    (TabPFN regressor,
-          dependency loss)                 one per latent dim)
-```
-
-**Three-step pipeline:**
-1. **Context generation** – select a representative set of normal training samples via clustering-based downsampling.
-2. **Encoder training** – train a linear encoder end-to-end using a dependency deviation loss (TabPFN predicts each latent dimension from the others; the encoder is pushed to minimise prediction error on normal data).
-3. **Anomaly scoring** – at test time, encode each sample and compute how much each latent dimension deviates from what the fitted TabPFN regressors predict; aggregate deviations into a scalar anomaly score.
-
-Optional extensions: Distributional Dependency Modeling (DDM) replaces point predictions with a Gaussian NLL loss; post-hoc Mixture-of-Experts (MoE) fits separate experts per cluster for multi-modal data.
+Anomaly detection in tabular data is challenging due to high dimensionality,
+complex feature dependencies, and heterogeneous noise.
+Many existing methods rely on proximity-based cues and may
+miss anomalies caused by violations of complex feature dependencies.
+Dependency-based anomaly detection provides a principled
+alternative by identifying anomalies as violations of dependencies
+among features. However, existing methods often struggle to
+model such dependencies robustly and to scale to high-dimensional
+data with complex dependency structures. To address these challenges,
+we propose uLEAD-TabPFN, a dependency-based anomaly
+detection framework built on Prior-Data Fitted Networks (PFNs).
+uLEAD-TabPFN identifies anomalies as violations of conditional
+dependencies in a learned latent space, leveraging frozen PFNs for
+dependency estimation. Combined with uncertainty-aware scoring,
+the proposed framework enables robust and scalable anomaly detection.
+Experiments on 57 tabular datasets from ADBench show
+that uLEAD-TabPFN achieves particularly strong performance in
+medium- and high-dimensional settings, where it attains the top
+average rank. On high-dimensional datasets, uLEAD-TabPFN improves
+the average ROC-AUC by nearly 20% over the average baseline
+and by approximately 2.8% over the best-performing baseline,
+while maintaining overall superior performance compared to state-of-
+the-art methods. Further analysis shows that uLEAD-TabPFN
+provides complementary anomaly detection capability, achieving
+strong performance on datasets where many existing methods
+struggle.
 
 ## Requirements
 
@@ -88,78 +97,4 @@ All command-line flags override the corresponding value in `config.py`:
 
 All hyperparameters live in `config.py`. Key settings:
 
-### Scoring methods (`scoring_method`)
 
-| Value | Description |
-|---|---|
-| `dependency` | Dependency deviation in latent space (default) |
-| `reconstruction` | Reconstruction error in input space |
-| `proximity` | SemiTabPFN proximity score (synthetic anomalies) |
-| `dep-recon` | Fusion of dependency + reconstruction |
-| `dep-prox` | Fusion of dependency + proximity |
-
-### Latent dimensionality (`latent_dim_strategy`)
-
-| Value | Description |
-|---|---|
-| `adaptive` | Identity mapping for low-dim (≤35 features), sqrt-linear compression for high-dim (default) |
-| `match_features` | `min(d, 50)` |
-| `quarter` | `d / 4` |
-
-### Caching (`from_scratch`)
-
-LEAD caches the expensive TabPFN predictions (`dep_dev/`) and fitted models (`model/`) under `save_path`. On subsequent runs with `from_scratch=False` (the default), the cached artifacts are reloaded and only the final scoring step is re-executed. Set `from_scratch=True` or use `--from-scratch` to force full retraining.
-
-## Output
-
-Results are appended to `results/results.csv` (configurable). Each row corresponds to one dataset × seed combination and includes:
-
-| Column | Description |
-|---|---|
-| `dataset` | Dataset name |
-| `seed` | Random seed |
-| `roc_auc` | Area under the ROC curve |
-| `ap` | Average precision |
-| `pr_auc` | Area under the precision-recall curve |
-| `f1_at_anomaly_pct` | F1 score at the true anomaly percentage threshold |
-| `t_train` | Training time (seconds) |
-| `t_predict` | Prediction time (seconds) |
-
-Intermediate artifacts are saved under `save_path/` (default: `results/lead/`):
-
-```
-results/lead/
-├── config.json          # Experiment configuration snapshot
-├── scripts/             # Copy of source files used for this run
-├── model/               # Trained encoder models (.pkl)
-├── dep_dev/             # Cached dependency deviations (.npy)
-├── labels/              # Test labels (.npy)
-├── recon_loss/          # Reconstruction errors (.npy)
-└── context_set/         # Context set indices (.npy)
-```
-
-## File Overview
-
-| File | Description |
-|---|---|
-| `lead.py` | Core `LeadTabPFN` model (encoder training, anomaly scoring, DDM, MoE) |
-| `run.py` | Evaluation script (dataset iteration, caching, result logging) |
-| `config.py` | Centralised hyperparameter configuration |
-| `semitabpfn.py` | `SemiTabPFN` proximity detector (synthetic anomaly generation) |
-| `datasets_files_name.json` | ADBench dataset catalogue |
-
-## ADBench Interface
-
-`LeadTabPFN` follows the ADBench detector interface:
-
-```python
-from lead import LeadTabPFN
-
-model = LeadTabPFN(seed=42)
-model.fit(X_train, y_train)   # y_train: 0 = normal, 1 = anomaly (used only to build context set)
-scores = model.predict_score(X_test)  # higher score = more anomalous
-```
-
-## Reproducibility
-
-Each run snapshots `config.json` and copies all source files into `save_path/scripts/` so that results can be traced back to the exact configuration and code used.
