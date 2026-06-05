@@ -16,14 +16,14 @@ from pathlib import Path
 # STEP 0: GLOBAL & INFRASTRUCTURE
 # ============================================================================
 
-BATCH_RUN = True
+BATCH_RUN = False
 
 CONFIG = {
     # --------------------------------------------------------------------------
     # Data Paths & I/O
     # --------------------------------------------------------------------------
-    'data_path': None,  # Auto-detected based on hostname (see below)
-    'datasets_json': 'datasets_files_name.json',
+    'data_path': None,  # Auto-detected from ADBENCH_DATA_PATH or bundled example data
+    'datasets_json': 'datasets_example.json',
     'output_csv': 'results/results.csv',
     'save_path': 'results/lead',
 
@@ -40,7 +40,7 @@ CONFIG = {
     'test_n_features': None, # None = all features, list = specific range of features
     'test_n_sample_cap': 50000, # None = all samples, int = specific sample cap
     'log_path': None,  # If None, logs go to SAVE_PATH/run.log in appending mode
-    'seeds': list(range(5)),
+    'seeds': [0],
     
 
     # --------------------------------------------------------------------------
@@ -82,7 +82,7 @@ CONFIG = {
     # --------------------------------------------------------------------------
     # Training Dynamics
     # --------------------------------------------------------------------------
-    'ae_epochs': 100,  # Number of encoder training epochs (increase for better performance, decrease for speed)
+    'ae_epochs': 100,  # Paper setting; reduce with --epochs for a quick smoke test
     'ae_warmup_epochs': 5,
     'ae_batch_size': 1024,
     'ae_lr_init': 5e-4,
@@ -143,11 +143,12 @@ CONFIG = {
 
 def _detect_data_path():
     """
-    Return the path to the ADBench dataset directory.
+    Return the path to an ADBench-format dataset directory.
 
     Priority:
     1. ADBENCH_DATA_PATH environment variable (if set)
-    2. Edit the return statement below for a hardcoded local path
+    2. Bundled example data under ./data/
+    3. Edit the return statement below for a hardcoded local path
 
     The directory should contain subdirectories Classical/, CV_by_ResNet18/, etc.,
     each holding .npz dataset files as distributed by ADBench.
@@ -157,16 +158,19 @@ def _detect_data_path():
     if env_path:
         return Path(env_path)
 
-    # --------------------------------------------------------------------------
-    # TODO: Set your local ADBench dataset directory here, e.g.:
+    bundled_data = Path(__file__).resolve().parent / 'data'
+    if bundled_data.exists():
+        return bundled_data
+
+    # Optional: set your local ADBench dataset directory here, e.g.:
     #   return Path('/path/to/adbench/datasets/')
     #   return Path('C:/path/to/adbench/datasets/')
-    # --------------------------------------------------------------------------
     raise ValueError(
         "ADBench data path not configured.\n"
         "Option 1: Set the ADBENCH_DATA_PATH environment variable:\n"
         "    export ADBENCH_DATA_PATH=/path/to/adbench/datasets/\n"
-        "Option 2: Edit _detect_data_path() in config.py and add a return statement."
+        "Option 2: keep the bundled ./data example directory in this repository.\n"
+        "Option 3: edit _detect_data_path() in config.py and add a return statement."
     )
 
 
@@ -180,7 +184,8 @@ if BATCH_RUN:
 
 
 CONFIG['data_path'] = _detect_data_path()
-CONFIG['seeds'] = list(range(CONFIG['n_iter'])) if CONFIG['n_iter'] is not None else list(range(5))    
+if CONFIG['n_iter'] is not None:
+    CONFIG['seeds'] = list(range(CONFIG['n_iter']))
 
 
 

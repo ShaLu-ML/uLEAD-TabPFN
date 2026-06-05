@@ -10,7 +10,8 @@ Key Features:
     - Linear encoder trained with dependency-based loss (dep_decoder mode)
     - Encoder learns latent space where dimensions are predictable from each other
     - TabPFN-based dependency expert operates in latent space to detect anomalies
-    - Adaptive latent dimension: p = min(max(10, int(0.03*d)), 40)
+    - Adaptive latent dimension with identity mapping for low-dimensional data
+      and a capped compressed representation for high-dimensional data
     - Double normalization: min-max [0,1] + median/MAD
     - All features treated as numerical (simplified pipeline)
 
@@ -162,8 +163,6 @@ class LinearAutoencoder(nn.Module):
     Training Loss (dep_decoder mode):
         L = L_dep + λ_rec·L_recon + λ_orth·L_orth + λ_z·L_z + λ_sparse·L_sparse
         where:
-            L_dep = Dependency deviation loss (TabPFN-based predictions in latent space)
-            L_recon = Reconstruction loss (MSE or Huber)
             L_dep = Dependency deviation loss (TabPFN-based predictions in latent space)
             L_recon = Reconstruction loss (MSE or Huber)
     """
@@ -384,7 +383,7 @@ class LeadTabPFN:
     ADBench-compatible interface with fit() and predict_score() methods.
 
     Pipeline:
-        1. fit(): Normalize → Generate context set (random sampling) → Train encoder (dep_decoder) → Cache latent representations
+        1. fit(): Normalize → Generate representative context set → Train encoder (dep_decoder) → Cache latent representations
         2. predict_score(): Normalize → Encode → Compute dependency deviations → Return anomaly scores
 
     Performance Optimizations:

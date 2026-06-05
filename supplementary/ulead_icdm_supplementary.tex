@@ -1,0 +1,573 @@
+
+%% Supplementary Material - IEEE ICDM 2026 submission
+%% Accompanies the main paper:
+%%   "Uncertainty-aware Dependency-based Anomaly Detection with TabPFN"
+%% Submitted for triple-blind review.  No author names or affiliations are included.
+
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+%% Bibliography / citation handling.
+\usepackage{cite}
+\usepackage{url}
+
+%% Math and graphics.
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+
+%% Tables.
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+
+%% Lists and algorithms.
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\definecolor{lightgray}{gray}{0.92}
+\definecolor{darkgray}{gray}{0.85}
+
+\begin{document}
+
+	\title{Supplementary Material for ``Uncertainty-aware Dependency-based Anomaly Detection with TabPFN''}
+
+	\author{\IEEEauthorblockN{Anonymous Author(s)}
+		\IEEEauthorblockA{Supplementary material for the ICDM 2026 submission\\
+			``Uncertainty-aware Dependency-based Anomaly Detection with TabPFN''}}
+
+	\maketitle
+
+	\noindent This document provides supplementary material accompanying the main ICDM 2026 submission.
+	It contains dataset statistics, full baseline descriptions and implementation details, pseudocode, complete per-dataset results, statistical significance tables, a detailed case study on the Wilt dataset, and latent-dimension sensitivity results.
+
+	%% ============================================================
+	%% Appendix A - Dataset Details
+	%% ============================================================
+	\appendices
+
+	\section{Dataset Details}
+	\label{app:datasets}
+	The dataset information used in the experiments is presented in Table~\ref{tab:datasets}.
+
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\resizebox{0.65\textwidth}{!}{
+			\begin{tabular}{lrrrrl}
+				\toprule
+				Dataset & \#Samples & \#Features & \#Anomalies & \%Anomalies & Category \\
+				\midrule
+				ALOI & 49534 & 27 & 1508 & 3.04 & Image \\
+				annthyroid & 7200 & 6 & 534 & 7.42 & Healthcare \\
+				backdoor & 95329 & 196 & 2329 & 2.44 & Network \\
+				breastw & 683 & 9 & 239 & 34.99 & Healthcare \\
+				campaign & 41188 & 62 & 4640 & 11.27 & Finance \\
+				cardio & 1831 & 21 & 176 & 9.61 & Healthcare \\
+				Cardiotocography & 2114 & 21 & 466 & 22.04 & Healthcare \\
+				celeba & 202599 & 39 & 4547 & 2.24 & Image \\
+				census & 299285 & 500 & 18568 & 6.20 & Sociology \\
+				cover & 286048 & 10 & 2747 & 0.96 & Botany \\
+				donors & 619326 & 10 & 36710 & 5.93 & Sociology \\
+				fault & 1941 & 27 & 673 & 34.67 & Physical \\
+				fraud & 284807 & 29 & 492 & 0.17 & Finance \\
+				glass & 214 & 7 & 9 & 4.21 & Forensic \\
+				Hepatitis & 80 & 19 & 13 & 16.25 & Healthcare \\
+				http & 567498 & 3 & 2211 & 0.39 & Web \\
+				InternetAds & 1966 & 1555 & 368 & 18.72 & Image \\
+				Ionosphere & 351 & 32 & 126 & 35.90 & Oryctognosy \\
+				landsat & 6435 & 36 & 1333 & 20.71 & Astronautics \\
+				letter & 1600 & 32 & 100 & 6.25 & Image \\
+				Lymphography & 148 & 18 & 6 & 4.05 & Healthcare \\
+				magic.gamma & 19020 & 10 & 6688 & 35.16 & Physical \\
+				mammography & 11183 & 6 & 260 & 2.32 & Healthcare \\
+				mnist & 7603 & 100 & 700 & 9.21 & Image \\
+				musk & 3062 & 166 & 97 & 3.17 & Chemistry \\
+				optdigits & 5216 & 64 & 150 & 2.88 & Image \\
+				PageBlocks & 5393 & 10 & 510 & 9.46 & Document \\
+				pendigits & 6870 & 16 & 156 & 2.27 & Image \\
+				Pima & 768 & 8 & 268 & 34.90 & Healthcare \\
+				satellite & 6435 & 36 & 2036 & 31.64 & Astronautics \\
+				satimage-2 & 5803 & 36 & 71 & 1.22 & Astronautics \\
+				shuttle & 49097 & 9 & 3511 & 7.15 & Astronautics \\
+				skin & 245057 & 3 & 50859 & 20.75 & Image \\
+				smtp & 95156 & 3 & 30 & 0.03 & Web \\
+				SpamBase & 4207 & 57 & 1679 & 39.91 & Document \\
+				speech & 3686 & 400 & 61 & 1.65 & Linguistics \\
+				Stamps & 340 & 9 & 31 & 9.12 & Document \\
+				thyroid & 3772 & 6 & 93 & 2.47 & Healthcare \\
+				vertebral & 240 & 6 & 30 & 12.50 & Biology \\
+				vowels & 1456 & 12 & 50 & 3.43 & Linguistics \\
+				Waveform & 3443 & 21 & 100 & 2.90 & Physics \\
+				WBC & 223 & 9 & 10 & 4.48 & Healthcare \\
+				WDBC & 367 & 30 & 10 & 2.72 & Healthcare \\
+				Wilt & 4819 & 5 & 257 & 5.33 & Botany \\
+				wine & 129 & 13 & 10 & 7.75 & Chemistry \\
+				WPBC & 198 & 33 & 47 & 23.74 & Healthcare \\
+				yeast & 1484 & 8 & 507 & 34.16 & Biology \\
+				CIFAR10 & 5263 & 512 & 263 & 5.00 & Image \\
+				FashionMNIST & 6315 & 512 & 315 & 5.00 & Image \\
+				MNIST-C & 10000 & 512 & 500 & 5.00 & Image \\
+				MVTec-AD & 5354 & 512 & 1258 & 23.50 & Image \\
+				SVHN & 5208 & 512 & 260 & 5.00 & Image \\
+				Agnews & 10000 & 768 & 500 & 5.00 & NLP \\
+				Amazon & 10000 & 768 & 500 & 5.00 & NLP \\
+				Imdb & 10000 & 768 & 500 & 5.00 & NLP \\
+				Yelp & 10000 & 768 & 500 & 5.00 & NLP \\
+				20news & 11905 & 768 & 591 & 4.96 & NLP \\
+				\bottomrule
+			\end{tabular}
+		}
+		\caption{Summary of datasets used for evaluation.}
+		\label{tab:datasets}
+	\end{table*}
+
+	%% ============================================================
+	%% Appendix B – Baseline Methods
+	%% ============================================================
+	\section{Baseline Methods}
+	\label{app:baselines}
+	We compare uLEAD-TabPFN against a total of 28 baseline methods drawn from four sources. First, we include all baseline methods provided in the ADBench benchmark~\cite{han2022adbench}. Second, we incorporate additional baselines evaluated by Livernoche et al.~\cite{livernochediffusion}, which extend ADBench with recent deep learning-based, generative, and diffusion-based anomaly detection methods.
+	Third, we additionally include two recently proposed methods that are not part of the above benchmarks, namely a PFN-based anomaly detection method, FoMo-0D~\cite{fomo0d2024zeroshoot}, and a diffusion-based tabular anomaly detection approach, DDAE~\cite{sattarov2025diffusion}.
+	Fourth, we include two recent representation-learning detectors, CAIT~\cite{mok2025cait} and DisentAD~\cite{ye2025disentad}, evaluated using their official implementations.
+
+	The evaluated baselines span a broad range of anomaly detection paradigms, including conventional, deep learning-based, generative, diffusion-based, and foundation model--based approaches. Specifically, the conventional baselines include CBLOF~\cite{he2003cblof}, COPOD~\cite{li2020copod}, ECOD~\cite{li2022ecod}, FeatureBagging~\cite{lazarevic2005featurebagging}, HBOS~\cite{goldstein2012hbos}, Isolation Forest~\cite{liu2008iforest}, kNN~\cite{ramaswamy2000knn}, LODA~\cite{pevny2016loda}, LOF~\cite{breunig2000lof}, MCD~\cite{fauconnier2009mcd}, OCSVM~\cite{scholkopf1999ocsvm}, and PCA~\cite{shyu2003pca}. Deep learning--based baselines include DeepSVDD~\cite{ruff2018deepsvdd} and DAGMM~\cite{zong2018dagmm}. Following Livernoche et al.~\cite{livernochediffusion}, we further include recent deep learning-based methods such as DROCC~\cite{goyal2020drocc}, GOAD~\cite{bergman2020goad}, ICL~\cite{shenkar2022icl}, SLAD~\cite{xu2023slad}, and DIF~\cite{xu2023dif}, as well as generative and diffusion-based approaches including normalizing flows with planar flows~\cite{rezende2015planar}, variational autoencoders (VAE)~\cite{kingma2013vae}, generative adversarial networks (GAN)~\cite{goodfellow2014gan}, and diffusion-based models using DDPMs~\cite{livernochediffusion,sattarov2025diffusion}.
+	In addition, we include the PFN-based anomaly detection method FoMo-0D~\cite{fomo0d2024zeroshoot} and the two recent representation-learning detectors CAIT~\cite{mok2025cait} and DisentAD~\cite{ye2025disentad}. Overall, our evaluation comprises 28 baseline methods.
+
+	For a fair and consistent comparison, the experimental results for all semi-supervised methods included in ADBench~\cite{han2022adbench} and the additional 10 baselines introduced by Livernoche et al.~\cite{livernochediffusion} are taken directly from~\cite{livernochediffusion}. The results for FoMo-0D~\cite{fomo0d2024zeroshoot} and the diffusion-based method of~\cite{sattarov2025diffusion} are reported from their respective original papers.
+
+	CAIT and DisentAD were evaluated using the author-provided codebases, under the same semi-supervised protocol as uLEAD-TabPFN: normal instances are split $50/50$ into train and test, all anomalies are placed in the test set, and ROC-AUC and PR-AUC are averaged over five seeds. Minor engineering adjustments for numerical stability and batching were applied without changing the evaluation protocol.
+
+	%% ============================================================
+	%% Appendix C – Implementation Details
+	%% ============================================================
+	\section{Implementation Details}
+	\label{app:implementation}
+	The algorithms for training and inference with uLEAD-TabPFN are presented in Algorithms~\ref{alg:train_ulead} and~\ref{alg:infer_ulead}, respectively.
+
+	\begin{algorithm}[t]
+		\caption{Training uLEAD-TabPFN}
+		\label{alg:train_ulead}
+		\begin{algorithmic}[1]
+			\Require Normal training set $\mathcal{X}_{\mathrm{train}}=\{\mathbf{x}_i\}_{i=1}^N$, context budget $c$, latent dimension cap $p$
+			\Require Frozen TabPFN conditional predictor $\mathrm{TabPFN}(\cdot)$
+			\Ensure Trained encoder $f_\theta$, trained variance networks $\{v_{\phi_j}\}_{j=1}^p$, context set $\mathcal{C}$, normalization stats $(\mu_{\mathcal{C}},\sigma_{\mathcal{C}})$
+
+			\vspace{2pt}
+			\State \textbf{Construct Representative Context Set:}
+			\State $\mathcal{C} \gets \mathrm{BuildContext}(\mathcal{X}_{\mathrm{train}}, c)$ \Comment{e.g., KMeans-based selection}
+			\State Compute $(\mu_{\mathcal{C}},\sigma_{\mathcal{C}})$ on $\mathcal{C}$
+			\State Normalize $\tilde{\mathbf{x}}\gets (\mathbf{x}-\mu_{\mathcal{C}})\oslash\sigma_{\mathcal{C}}$ for all $\mathbf{x}\in\mathcal{X}_{\mathrm{train}} \cup \mathcal{C}$
+
+			\vspace{2pt}
+			\State \textbf{Train encoder $f_\theta$:}
+			\State Initialize encoder parameters $\theta$ \Comment{e.g., $f_\theta(\tilde{\mathbf{x}})=W\tilde{\mathbf{x}}+b$}
+			\For{each epoch}
+			\For{each mini-batch $\mathcal{B}\subset \mathcal{X}_{\mathrm{train}}$}
+			\State Compute latent batch $Z_{\mathcal{B}} \gets \{\mathbf{z}_i=f_\theta(\tilde{\mathbf{x}}_i)\mid \mathbf{x}_i\in \mathcal{B}\}$
+			\State Compute context latents $Z_{\mathcal{C}} \gets \{\mathbf{z}=f_\theta(\tilde{\mathbf{x}})\mid \mathbf{x}\in\mathcal{C}\}$
+			\State $L_{\mathrm{dep}}\gets 0$
+			\For{$j=1$ to $p$}
+			\State $\hat{\mu}_{ij} \gets \mathrm{TabPFNMean}(j;\, \mathbf{z}_{i,-j}, Z_{\mathcal{C}})$ for each $\mathbf{z}_i\in Z_{\mathcal{B}}$
+			\State $L_{\mathrm{dep}} \gets L_{\mathrm{dep}} + \frac{1}{|\mathcal{B}|}\sum_{\mathbf{z}_i\in Z_{\mathcal{B}}}(z_{ij}-\hat{\mu}_{ij})^2$
+			\EndFor
+			\State $L_{\mathrm{dep}}\gets \frac{1}{p}L_{\mathrm{dep}}$
+			\State $L_{\mathrm{rec}} \gets \frac{1}{|\mathcal{B}|}\sum_{\mathbf{x}_i\in\mathcal{B}} \|\tilde{\mathbf{x}}_i - W^\top \mathbf{z}_i\|_2^2$ \Comment{optional}
+			\State $L_{\mathrm{enc}} \gets \lambda_{\mathrm{dep}}L_{\mathrm{dep}}+\lambda_{\mathrm{rec}}L_{\mathrm{rec}}$
+			\State Update $\theta$ using $L_{\mathrm{enc}}$ (TabPFN frozen)
+			\EndFor
+			\EndFor
+
+			\vspace{2pt}
+			\State \textbf{Train variance networks $\{v_{\phi_j}\}$ on $\mathcal{X}_{\mathrm{train}}$:}
+			\For{$j=1$ to $p$}
+			\State Initialize $\phi_j$
+			\For{each epoch}
+			\For{each mini-batch $\mathcal{B}\subset \mathcal{X}_{\mathrm{train}}$}
+			\State Compute $Z_{\mathcal{B}}\gets\{\mathbf{z}_i=f_\theta(\tilde{\mathbf{x}}_i)\mid \mathbf{x}_i\in\mathcal{B}\}$ and $Z_{\mathcal{C}}\gets\{\mathbf{z}=f_\theta(\tilde{\mathbf{x}})\mid \mathbf{x}\in\mathcal{C}\}$
+			\State $\hat{\mu}_{ij} \gets \mathrm{TabPFNMean}(j;\, \mathbf{z}_{i,-j}, Z_{\mathcal{C}})$ for $\mathbf{x}_i\in\mathcal{B}$
+			\State $\log \hat{\sigma}^2_{ij} \gets v_{\phi_j}(\mathbf{z}_{i,-j})$ for $\mathbf{x}_i\in\mathcal{B}$
+			\State $L_{\mathrm{var}} \gets \frac{1}{|\mathcal{B}|}\sum_{\mathbf{x}_i\in\mathcal{B}}
+			\left[\frac{(z_{ij}-\hat{\mu}_{ij})^2}{\hat{\sigma}^2_{ij}} + \log \hat{\sigma}^2_{ij}\right]$
+			\State Update $\phi_j$ using $L_{\mathrm{var}}$ (encoder and TabPFN frozen)
+			\EndFor
+			\EndFor
+			\EndFor
+
+			\State \Return $f_\theta$, $\{v_{\phi_j}\}_{j=1}^p$, $\mathcal{C}$, $(\mu_{\mathcal{C}},\sigma_{\mathcal{C}})$
+		\end{algorithmic}
+	\end{algorithm}
+	\noindent\textbf{Remark.} $\hat{\mu}_{ij}$ denotes the conditional mean predicted for sample $i$ and latent dimension $j$, i.e., $\hat{\mu}_{ij}\approx\mathbb{E}[Z_j\mid Z_{-j}=\mathbf{z}_{i,-j},\mathcal{C}]$. $\oslash$ denotes element-wise division.
+
+	\begin{algorithm}[t]
+		\caption{Inference with uLEAD-TabPFN}
+		\label{alg:infer_ulead}
+		\begin{algorithmic}[1]
+			\Require Test sample $\mathbf{x}$, context set $\mathcal{C}$, normalization stats $(\mu_{\mathcal{C}},\sigma_{\mathcal{C}})$
+			\Require Trained encoder $f_\theta$, trained variance nets $\{v_{\phi_j}\}_{j=1}^p$, frozen TabPFN
+			\Ensure Anomaly score $s(\mathbf{x})$
+
+			\State Normalize $\tilde{\mathbf{x}}\gets (\mathbf{x}-\mu_{\mathcal{C}})\oslash\sigma_{\mathcal{C}}$
+			\State Compute $\mathbf{z} \gets f_\theta(\tilde{\mathbf{x}})$
+			\State Compute $Z_{\mathcal{C}} \gets \{f_\theta(\tilde{\mathbf{x}})\mid \tilde{\mathbf{x}}\in\tilde{\mathcal{C}}\}$
+
+			\State $s(\mathbf{x})\gets 0$
+			\For{$j=1$ to $p$}
+			\State $\hat{\mu}_{j} \gets \mathrm{TabPFNMean}(j;\, \mathbf{z}_{-j}, Z_{\mathcal{C}})$
+			\State $\log \hat{\sigma}^2_{j} \gets v_{\phi_j}(\mathbf{z}_{-j})$
+			\State $s(\mathbf{x}) \gets s(\mathbf{x}) + \frac{(z_{j}-\hat{\mu}_{j})^2}{\hat{\sigma}^2_{j}}$
+			\EndFor
+			\State $s(\mathbf{x})\gets \frac{1}{p}s(\mathbf{x})$
+			\State \Return $s(\mathbf{x})$
+		\end{algorithmic}
+	\end{algorithm}
+
+	%% ============================================================
+	%% Appendix D – Additional Results
+	%% ============================================================
+	\section{Additional Results}
+	\label{app:results}
+
+	Tables~\ref{tab:rocaus_top10} and \ref{tab:prauc_top10} report detailed ROC-AUC and PR-AUC results for the proposed method and the baselines. Each row corresponds to one dataset and each column corresponds to one method. We report the mean ROC-AUC or PR-AUC and standard deviation over five runs (five different seeds). The value in parentheses denotes the rank of the method on that dataset (lower is better). Per-dataset ranks are computed over all compared methods; for readability, the table displays uLEAD-TabPFN and a fixed subset of high-performing baseline columns selected by aggregate mean performance over the 57 datasets.
+
+	For the proposed method, uLEAD-TabPFN, we additionally report two relative changes: (i) the percentage change compared to the best-performing baseline (denoted as \%B), and (ii) the percentage change compared to the average baseline (denoted as \%A). A positive value indicates an improvement and a negative value indicates a degradation. Both quantities, and the per-dataset ranks, are computed over the full baseline pool: all 27 ROC-AUC baselines and all 28 PR-AUC baselines (DDAE reports PR-AUC only).
+
+	\begin{table*}[htbp]
+		\centering
+		\tiny
+		\setlength{\tabcolsep}{1.5pt}
+		\caption{ROC-AUC comparison on ADBench datasets. We report mean$\pm$std over five runs (five different seeds). Numbers in parentheses denote the per-dataset rank among all 28 methods (uLEAD-TabPFN and all 27 ROC-AUC baselines). uLEAD-TabPFN additionally reports the relative change compared to the best baseline (\%B) and the average baseline (\%A). Per-dataset ranks and relative changes are computed over the full baseline pool; for readability, the table displays uLEAD-TabPFN and a fixed subset of high-performing baseline columns selected by aggregate mean ROC-AUC over the 57 datasets.}
+		\label{tab:rocaus_top10}
+		\renewcommand{\arraystretch}{0.85}
+		\resizebox{\textwidth}{!}{%
+			\begin{tabular}{lccccccccccc}
+				\toprule
+				Dataset & uLEAD-TabPFN & CAIT & DTE-NP & kNN & FoMo-0D & ICL & LOF & CBLOF & DDPM & SLAD & FeatureBagging \\
+				\midrule
+				skin & 95.63$\pm$2.31(4)\,[{-}4.03\%B, {+}26.23\%A] & 99.64$\pm$0.09(1) & 98.86$\pm$0.46(3) & 99.49$\pm$0.08(2) & 70.60$\pm$0.88(19) & 6.58$\pm$0.63(28) & 86.34$\pm$1.77(14) & 91.82$\pm$0.21(5) & 88.74$\pm$4.40(11) & 91.05$\pm$2.61(7) & 78.39$\pm$0.91(16) \\
+				smtp & 91.33$\pm$1.65(9)\,[{-}4.30\%B, {+}7.99\%A] & 84.65$\pm$1.40(18) & 92.98$\pm$2.91(5) & 92.43$\pm$2.70(6) & 83.04$\pm$4.69(20) & 74.36$\pm$7.07(25) & 93.42$\pm$2.48(4) & 87.28$\pm$5.65(13) & 95.43$\pm$1.26(1) & 92.15$\pm$1.87(7) & 84.81$\pm$3.66(16) \\
+				http & 98.25$\pm$1.40(19)\,[{-}1.75\%B, {+}6.93\%A] & 99.83$\pm$0.07(12) & 99.98$\pm$0.03(4.5) & 100.00$\pm$0.00(2) & 99.92$\pm$0.05(10) & 98.24$\pm$3.45(20) & 99.98$\pm$0.03(4.5) & 99.93$\pm$0.01(9) & 100.00$\pm$0.00(2) & 99.91$\pm$0.08(11) & 92.10$\pm$0.57(23) \\
+				wilt & 97.47$\pm$0.94(1)\,[{+}0.35\%B, {+}79.26\%A] & 87.02$\pm$2.52(3) & 62.91$\pm$5.59(11) & 63.66$\pm$0.00(10) & 97.13$\pm$0.00(2) & 76.42$\pm$3.46(5) & 68.81$\pm$0.00(9) & 42.90$\pm$1.14(18) & 71.66$\pm$0.81(8) & 61.76$\pm$0.11(12) & 73.35$\pm$10.50(7) \\
+				vertebral & 52.78$\pm$6.69(10)\,[{-}39.47\%B, {+}3.42\%A] & 50.87$\pm$5.26(11) & 54.30$\pm$15.47(9) & 57.67$\pm$3.58(6) & 87.20$\pm$2.58(1) & 79.19$\pm$5.06(2) & 64.30$\pm$1.31(4) & 54.43$\pm$1.97(8) & 70.67$\pm$6.28(3) & 44.96$\pm$0.25(19) & 64.13$\pm$2.15(5) \\
+				annthyroid & 81.60$\pm$5.96(18)\,[{-}12.58\%B, {-}2.22\%A] & 91.04$\pm$0.74(5) & 92.90$\pm$0.25(3) & 92.81$\pm$0.00(4) & 85.17$\pm$0.00(17) & 81.11$\pm$1.07(19) & 88.63$\pm$0.00(12) & 90.14$\pm$1.08(8) & 88.82$\pm$1.34(11) & 93.34$\pm$0.36(1) & 88.95$\pm$1.61(9) \\
+				mammography & 71.73$\pm$2.77(25)\,[{-}20.89\%B, {-}12.83\%A] & 89.66$\pm$0.55(4) & 87.62$\pm$0.09(9) & 87.58$\pm$0.00(10) & 69.11$\pm$1.21(28) & 71.87$\pm$9.11(24) & 85.52$\pm$0.00(13) & 84.74$\pm$0.02(15) & 81.01$\pm$2.04(18) & 74.51$\pm$0.67(21) & 86.31$\pm$0.35(11) \\
+				thyroid & 88.18$\pm$3.89(28)\,[{-}10.89\%B, {-}8.32\%A] & 97.56$\pm$0.55(12) & 98.63$\pm$0.04(4) & 98.68$\pm$0.00(2) & 96.84$\pm$0.00(14) & 95.40$\pm$0.98(17) & 92.72$\pm$0.00(25) & 98.54$\pm$0.06(8) & 97.95$\pm$0.22(11) & 95.27$\pm$0.24(18) & 93.15$\pm$1.52(24) \\
+				glass & 87.59$\pm$2.42(9)\,[{-}11.92\%B, {+}9.37\%A] & 86.13$\pm$2.15(10) & 89.64$\pm$3.54(5) & 92.04$\pm$1.12(4) & 98.30$\pm$0.53(2) & 99.44$\pm$0.58(1) & 88.82$\pm$1.98(7) & 89.35$\pm$1.48(6) & 66.67$\pm$13.63(25) & 86.04$\pm$5.69(11) & 88.49$\pm$1.71(8) \\
+				yeast & 57.41$\pm$1.07(1)\,[{+}9.29\%B, {+}24.96\%A] & 43.79$\pm$2.10(21) & 44.58$\pm$0.33(20) & 44.74$\pm$0.00(18) & 49.91$\pm$0.00(5) & 48.98$\pm$2.39(8) & 45.79$\pm$0.00(15) & 50.40$\pm$0.08(4) & 49.13$\pm$2.85(6) & 48.69$\pm$0.11(9) & 46.40$\pm$1.33(14) \\
+				pima & 64.75$\pm$3.46(19)\,[{-}20.55\%B, {-}5.11\%A] & 72.46$\pm$1.47(10) & 81.50$\pm$2.57(1) & 76.94$\pm$1.87(4) & 80.46$\pm$1.48(2) & 79.68$\pm$3.06(3) & 70.53$\pm$2.19(15) & 72.94$\pm$1.07(9) & 70.27$\pm$2.28(16) & 60.62$\pm$4.21(22) & 71.93$\pm$2.22(13) \\
+				stamps & 84.79$\pm$3.37(22)\,[{-}13.36\%B, {-}3.52\%A] & 94.16$\pm$1.07(6) & 97.87$\pm$0.37(1) & 95.89$\pm$1.44(4) & 97.52$\pm$0.39(2) & 96.68$\pm$1.09(3) & 93.74$\pm$2.36(7) & 93.41$\pm$1.66(10) & 91.84$\pm$4.15(15) & 81.97$\pm$8.29(23) & 94.21$\pm$2.26(5) \\
+				wbc & 79.98$\pm$5.19(26)\,[{-}19.84\%B, {-}14.61\%A] & 95.81$\pm$1.85(22) & 99.54$\pm$0.28(5) & 99.12$\pm$0.19(13) & 99.61$\pm$0.31(4) & 99.66$\pm$0.36(2) & 80.52$\pm$4.47(25) & 98.31$\pm$1.31(16) & 99.20$\pm$0.39(11) & 99.78$\pm$0.18(1) & 58.05$\pm$18.08(27) \\
+				breastw & 87.14$\pm$1.20(25)\,[{-}12.45\%B, {-}6.32\%A] & 98.71$\pm$0.35(14) & 99.28$\pm$0.12(5) & 99.05$\pm$0.26(12) & 99.15$\pm$0.23(9) & 98.28$\pm$0.45(17) & 88.91$\pm$6.80(24) & 99.11$\pm$0.23(11) & 98.70$\pm$0.43(15) & 99.53$\pm$0.13(1) & 59.07$\pm$15.44(26) \\
+				shuttle & 99.23$\pm$0.12(18)\,[{-}0.75\%B, {+}5.49\%A] & 99.79$\pm$0.08(9) & 99.93$\pm$0.02(2) & 99.91$\pm$0.00(4.5) & 99.82$\pm$0.09(7) & 99.92$\pm$0.04(3) & 99.98$\pm$0.00(1) & 99.72$\pm$0.02(11) & 99.91$\pm$0.01(4.5) & 99.90$\pm$0.01(6) & 86.89$\pm$8.22(23) \\
+				magic.gamma & 83.46$\pm$1.09(6)\,[{-}5.80\%B, {+}13.01\%A] & 88.60$\pm$0.49(1) & 83.57$\pm$0.76(5) & 83.27$\pm$0.00(8) & 84.77$\pm$0.14(3) & 75.56$\pm$0.42(12) & 83.40$\pm$0.00(7) & 75.81$\pm$0.00(11) & 85.97$\pm$1.08(2) & 72.00$\pm$0.01(17) & 84.19$\pm$0.72(4) \\
+				pageblocks & 93.45$\pm$1.51(2)\,[{-}3.09\%B, {+}8.42\%A] & 96.43$\pm$0.38(1) & 89.32$\pm$0.26(9) & 89.65$\pm$0.00(8) & 86.58$\pm$0.00(18) & 88.39$\pm$0.77(11) & 91.30$\pm$0.00(5) & 91.23$\pm$0.11(6) & 86.93$\pm$0.42(17) & 87.86$\pm$0.01(14) & 91.11$\pm$0.30(7) \\
+				donors & 99.99$\pm$0.01(1)\,[{+}0.08\%B, {+}17.12\%A] & 99.17$\pm$0.41(6) & 99.26$\pm$0.29(5) & 99.49$\pm$0.06(4) & 99.91$\pm$0.02(2) & 99.90$\pm$0.05(3) & 96.97$\pm$0.24(7) & 93.47$\pm$0.23(10) & 82.50$\pm$1.83(19) & 88.51$\pm$5.51(17) & 95.21$\pm$1.72(9) \\
+				cover & 82.04$\pm$5.04(18)\,[{-}17.28\%B, {-}0.27\%A] & 98.92$\pm$0.37(4) & 97.73$\pm$0.55(6) & 97.54$\pm$0.15(7) & 99.12$\pm$0.29(3) & 89.34$\pm$4.02(15) & 99.18$\pm$0.10(1) & 94.04$\pm$0.28(13) & 98.35$\pm$0.66(5) & 73.97$\pm$13.80(21) & 99.16$\pm$0.63(2) \\
+				vowels & 97.97$\pm$1.01(2)\,[{-}1.00\%B, {+}43.95\%A] & 98.96$\pm$0.46(1) & 81.42$\pm$1.44(10) & 82.21$\pm$0.00(9) & 81.29$\pm$0.00(11) & 85.10$\pm$2.13(7) & 86.30$\pm$0.00(5) & 78.72$\pm$4.01(12) & 86.38$\pm$1.94(4) & 85.02$\pm$0.02(8) & 85.32$\pm$1.16(6) \\
+				wine & 95.73$\pm$5.14(14)\,[{-}4.27\%B, {+}4.71\%A] & 99.37$\pm$0.56(6) & 99.44$\pm$0.97(5) & 99.19$\pm$0.22(7) & 99.94$\pm$0.12(2) & 99.87$\pm$0.29(3) & 98.36$\pm$0.38(8) & 97.75$\pm$0.59(11) & 99.61$\pm$0.09(4) & 100.00$\pm$0.00(1) & 97.93$\pm$0.87(9) \\
+				pendigits & 97.91$\pm$1.20(8)\,[{-}1.96\%B, {+}9.84\%A] & 99.60$\pm$0.15(3) & 99.61$\pm$0.17(2) & 99.87$\pm$0.00(1) & 98.11$\pm$0.00(6.5) & 96.71$\pm$0.83(10) & 99.05$\pm$0.00(5) & 96.67$\pm$0.07(11) & 98.11$\pm$0.23(6.5) & 94.61$\pm$0.41(13) & 99.50$\pm$0.11(4) \\
+				lymphography & 88.08$\pm$9.11(25)\,[{-}11.92\%B, {-}7.46\%A] & 86.85$\pm$7.05(26) & 99.93$\pm$0.09(6) & 99.93$\pm$0.08(6) & 99.93$\pm$0.11(6) & 100.00$\pm$0.00(2) & 98.21$\pm$0.75(22) & 99.83$\pm$0.02(12) & 99.94$\pm$0.09(4) & 100.00$\pm$0.01(2) & 96.61$\pm$2.84(23) \\
+				hepatitis & 75.73$\pm$3.07(20)\,[{-}24.22\%B, {-}9.64\%A] & 62.62$\pm$7.02(27) & 93.22$\pm$3.90(9) & 96.46$\pm$1.46(6) & 99.88$\pm$0.24(3) & 99.94$\pm$0.13(1) & 66.92$\pm$7.01(26) & 86.26$\pm$2.35(12) & 97.74$\pm$1.18(5) & 99.93$\pm$0.15(2) & 67.76$\pm$6.50(25) \\
+				cardiotocography & 71.07$\pm$3.69(11)\,[{-}10.38\%B, {+}9.47\%A] & 72.60$\pm$2.88(9) & 63.76$\pm$1.88(17) & 62.11$\pm$0.00(20) & 72.15$\pm$0.00(10) & 54.20$\pm$1.80(24) & 64.49$\pm$0.00(16) & 67.61$\pm$2.21(13) & 54.54$\pm$2.96(23) & 47.32$\pm$0.31(26) & 63.64$\pm$2.40(18) \\
+				waveform & 62.00$\pm$5.28(20)\,[{-}19.43\%B, {-}5.84\%A] & 71.33$\pm$3.23(9) & 74.48$\pm$0.00(5) & 75.21$\pm$0.00(4) & 71.02$\pm$0.00(10) & 68.68$\pm$3.66(13) & 76.00$\pm$0.00(2) & 72.93$\pm$0.90(6) & 62.17$\pm$2.64(19) & 48.92$\pm$0.08(28) & 76.95$\pm$1.07(1) \\
+				cardio & 84.84$\pm$1.39(20)\,[{-}12.13\%B, {-}2.98\%A] & 91.48$\pm$1.25(15) & 91.80$\pm$0.59(14) & 92.00$\pm$0.00(13) & 94.27$\pm$0.00(6) & 80.01$\pm$2.12(24) & 92.21$\pm$0.00(11) & 93.49$\pm$1.47(8) & 86.94$\pm$1.96(18) & 83.05$\pm$1.10(21) & 92.12$\pm$0.56(12) \\
+				fault & 75.13$\pm$0.76(2)\,[{-}2.30\%B, {+}31.41\%A] & 76.90$\pm$0.65(1) & 58.64$\pm$0.65(14) & 58.73$\pm$0.00(13) & 61.82$\pm$0.00(5) & 60.63$\pm$0.50(7) & 47.42$\pm$0.00(28) & 59.00$\pm$1.29(11) & 61.09$\pm$1.16(6) & 63.93$\pm$0.19(3) & 48.32$\pm$0.95(27) \\
+				aloi & 58.47$\pm$0.56(1)\,[{+}4.37\%B, {+}14.23\%A] & 56.02$\pm$0.46(2) & 51.19$\pm$0.46(12) & 51.04$\pm$0.00(14) & 54.05$\pm$0.30(4) & 47.50$\pm$0.98(28) & 48.76$\pm$0.00(24) & 53.69$\pm$0.15(8) & 49.91$\pm$0.35(20) & 50.76$\pm$0.29(17) & 49.07$\pm$0.53(23) \\
+				fraud & 95.41$\pm$0.61(5)\,[{-}0.24\%B, {+}5.54\%A] & 95.35$\pm$0.16(7) & 95.64$\pm$1.05(1) & 95.43$\pm$1.04(4) & 93.91$\pm$2.81(17) & 92.78$\pm$1.46(20) & 94.35$\pm$1.41(15) & 94.91$\pm$1.08(10) & 93.65$\pm$0.92(18) & 94.38$\pm$1.01(14) & 94.83$\pm$1.56(12) \\
+				wdbc & 97.77$\pm$1.17(20)\,[{-}2.01\%B, {+}3.46\%A] & 99.02$\pm$0.43(14) & 99.52$\pm$0.38(5) & 99.05$\pm$0.27(13) & 99.77$\pm$0.25(2) & 99.78$\pm$0.27(1) & 99.62$\pm$0.21(4) & 98.73$\pm$0.43(17.5) & 99.30$\pm$0.17(9) & 99.49$\pm$0.25(6) & 99.63$\pm$0.18(3) \\
+				letter & 93.24$\pm$1.60(2)\,[{-}0.42\%B, {+}126.73\%A] & 93.64$\pm$0.58(1) & 34.38$\pm$0.98(19) & 35.43$\pm$0.00(18) & 40.90$\pm$0.00(10) & 42.68$\pm$1.17(9) & 44.83$\pm$0.00(8) & 33.24$\pm$0.66(21) & 38.05$\pm$1.12(13) & 36.80$\pm$0.41(14) & 44.84$\pm$1.00(7) \\
+				ionosphere & 95.62$\pm$1.16(12)\,[{-}3.39\%B, {+}5.83\%A] & 98.19$\pm$0.25(3) & 97.77$\pm$1.39(4) & 97.44$\pm$0.98(5) & 96.59$\pm$1.25(9) & 98.98$\pm$0.32(1) & 94.29$\pm$2.20(16) & 96.78$\pm$1.50(8) & 94.60$\pm$0.85(14) & 98.21$\pm$0.60(2) & 94.47$\pm$2.10(15) \\
+				wpbc & 55.76$\pm$1.97(17)\,[{-}42.28\%B, {-}10.14\%A] & 52.33$\pm$1.95(21) & 83.16$\pm$13.46(3) & 63.67$\pm$2.34(8) & 76.10$\pm$2.11(6) & 96.61$\pm$1.17(1) & 57.36$\pm$2.01(14) & 59.57$\pm$1.98(12) & 66.49$\pm$3.17(7) & 95.53$\pm$2.21(2) & 56.79$\pm$1.86(15) \\
+				satellite & 82.72$\pm$0.57(6)\,[{-}5.45\%B, {+}8.66\%A] & 85.93$\pm$0.97(2) & 82.11$\pm$0.67(8) & 82.24$\pm$0.00(7) & 84.98$\pm$0.00(5) & 85.15$\pm$0.48(4) & 80.30$\pm$0.00(9) & 73.20$\pm$0.92(19) & 77.70$\pm$0.53(12) & 87.49$\pm$0.10(1) & 80.11$\pm$0.11(10) \\
+				satimage-2 & 99.66$\pm$0.30(6)\,[{-}0.26\%B, {+}1.73\%A] & 99.71$\pm$0.11(4) & 99.67$\pm$0.00(5) & 99.71$\pm$0.00(3) & 98.40$\pm$0.00(19) & 99.48$\pm$0.22(9) & 99.38$\pm$0.00(12) & 99.42$\pm$0.01(11) & 99.62$\pm$0.16(7) & 99.77$\pm$0.00(2) & 99.47$\pm$0.03(10) \\
+				landsat & 67.32$\pm$0.52(6)\,[{-}9.60\%B, {+}17.43\%A] & 74.47$\pm$1.90(1) & 68.20$\pm$1.75(5) & 68.25$\pm$0.00(4) & 69.53$\pm$0.00(3) & 65.13$\pm$0.44(9) & 66.58$\pm$0.00(7) & 57.21$\pm$0.26(13) & 51.37$\pm$1.00(21) & 65.03$\pm$0.18(10) & 66.38$\pm$0.17(8) \\
+				celeba & 74.43$\pm$0.94(11)\,[{-}11.78\%B, {+}8.02\%A] & 73.45$\pm$3.27(12) & 70.40$\pm$0.37(17) & 73.14$\pm$0.72(13) & 74.81$\pm$0.61(10) & 72.21$\pm$0.82(14) & 43.73$\pm$0.75(28) & 79.28$\pm$1.30(5) & 78.56$\pm$1.99(6) & 67.43$\pm$1.64(20) & 46.89$\pm$1.80(26) \\
+				spambase & 80.48$\pm$1.07(15)\,[{-}5.52\%B, {+}5.54\%A] & 82.68$\pm$1.24(6) & 83.74$\pm$0.69(3) & 83.36$\pm$0.00(5) & 78.21$\pm$0.00(16) & 83.53$\pm$0.45(4) & 73.23$\pm$0.00(19) & 81.52$\pm$0.55(11) & 64.54$\pm$0.80(27) & 84.86$\pm$0.20(2) & 69.64$\pm$2.09(23) \\
+				campaign & 74.71$\pm$1.11(14)\,[{-}7.67\%B, {+}5.59\%A] & 77.91$\pm$2.28(6) & 78.79$\pm$0.25(2) & 78.48$\pm$0.00(4) & 65.30$\pm$0.70(22) & 80.92$\pm$0.79(1) & 70.55$\pm$0.00(17) & 77.05$\pm$0.31(11) & 74.51$\pm$0.42(15) & 76.75$\pm$0.16(13) & 69.10$\pm$3.85(20) \\
+				optdigits & 85.48$\pm$5.00(10)\,[{-}12.04\%B, {+}20.14\%A] & 94.09$\pm$2.01(6) & 94.28$\pm$1.67(5) & 93.72$\pm$0.00(7) & 85.28$\pm$0.00(11) & 97.18$\pm$0.80(1) & 96.65$\pm$0.00(2) & 83.52$\pm$1.69(13) & 90.76$\pm$2.12(8) & 95.28$\pm$0.17(4) & 96.27$\pm$0.49(3) \\
+				mnist & 88.30$\pm$1.60(15.5)\,[{-}9.03\%B, {+}8.20\%A] & 97.07$\pm$0.19(1) & 94.02$\pm$0.42(2) & 93.85$\pm$0.00(3) & 91.27$\pm$0.00(6) & 90.11$\pm$1.13(11) & 92.93$\pm$0.00(4) & 91.10$\pm$0.23(7) & 87.27$\pm$3.22(17) & 89.73$\pm$0.44(13) & 92.55$\pm$0.40(5) \\
+				musk & 100.00$\pm$0.00(8.5)\,[{+}0.00\%B, {+}4.44\%A] & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 99.62$\pm$0.43(21) & 99.37$\pm$0.63(22) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) \\
+				backdoor & 96.07$\pm$0.46(1)\,[{+}0.78\%B, {+}28.30\%A] & 93.51$\pm$0.31(7) & 93.31$\pm$1.70(8) & 93.75$\pm$0.53(5) & 78.59$\pm$17.11(14) & 93.62$\pm$0.69(6) & 95.33$\pm$0.25(2) & 69.65$\pm$5.23(18) & 80.93$\pm$0.56(13) & 50.00$\pm$0.00(26) & 94.83$\pm$0.62(3) \\
+				speech & 60.53$\pm$2.26(1)\,[{+}15.76\%B, {+}46.91\%A] & 49.95$\pm$2.66(4) & 41.37$\pm$0.00(10.5) & 36.36$\pm$0.00(26) & 40.10$\pm$1.75(12) & 48.86$\pm$2.72(7) & 37.53$\pm$0.00(17) & 35.88$\pm$0.15(28) & 36.96$\pm$0.86(20) & 41.37$\pm$0.94(10.5) & 37.48$\pm$0.37(18) \\
+				census & 70.49$\pm$1.23(8)\,[{-}4.92\%B, {+}14.85\%A] & 61.37$\pm$1.08(15) & 72.10$\pm$0.40(3) & 72.26$\pm$0.29(2) & 60.54$\pm$4.96(16) & 70.56$\pm$0.35(5) & 58.46$\pm$1.06(19) & 70.84$\pm$0.28(4) & 70.15$\pm$0.23(9) & 57.91$\pm$10.84(20) & 55.92$\pm$1.00(21) \\
+				CIFAR10 & 62.16$\pm$7.07(20)\,[{-}14.13\%B, {-}2.63\%A] & 72.39$\pm$0.43(1) & 67.82$\pm$0.00(7) & 67.53$\pm$0.00(9.5) & 64.53$\pm$0.62(16) & 63.60$\pm$0.83(18) & 70.30$\pm$0.00(4) & 67.87$\pm$0.21(6) & 67.91$\pm$0.13(5) & 66.60$\pm$0.10(14) & 70.31$\pm$0.21(3) \\
+				SVHN & 59.79$\pm$2.64(17)\,[{-}6.48\%B, {+}2.10\%A] & 63.63$\pm$1.12(3) & 62.13$\pm$0.00(4) & 61.69$\pm$0.00(6) & 59.93$\pm$0.64(16) & 61.70$\pm$0.50(5) & 63.82$\pm$0.00(2) & 60.97$\pm$0.17(10) & 61.37$\pm$0.08(7) & 60.87$\pm$0.07(11) & 63.93$\pm$0.14(1) \\
+				MVTec-AD & 78.31$\pm$10.98(14)\,[{-}18.95\%B, {-}0.09\%A] & 96.62$\pm$0.47(1) & 89.66$\pm$1.51(5) & 81.51$\pm$1.82(9) & 75.31$\pm$1.26(22) & 94.75$\pm$0.84(3) & 80.36$\pm$2.14(12) & 79.96$\pm$2.02(13) & 78.00$\pm$1.99(15) & 93.24$\pm$1.09(4) & 80.45$\pm$2.20(11) \\
+				FashionMNIST & 88.62$\pm$6.53(9)\,[{-}3.33\%B, {+}9.12\%A] & 87.92$\pm$0.38(13) & 90.14$\pm$0.00(4) & 89.87$\pm$0.00(6) & 86.66$\pm$0.66(17) & 90.56$\pm$0.27(3) & 91.60$\pm$0.00(2) & 89.10$\pm$0.15(8) & 88.52$\pm$0.07(10) & 89.94$\pm$0.04(5) & 91.67$\pm$0.11(1) \\
+				MNIST-C & 86.71$\pm$11.46(3)\,[{-}0.71\%B, {+}20.21\%A] & 49.21$\pm$0.67(27) & 84.74$\pm$0.00(5) & 84.11$\pm$0.00(6) & 77.28$\pm$1.69(15) & 85.62$\pm$0.52(4) & 87.21$\pm$0.00(2) & 81.11$\pm$0.09(8) & 80.12$\pm$0.14(9) & 83.51$\pm$0.11(7) & 87.33$\pm$0.15(1) \\
+				yelp & 68.18$\pm$0.43(2)\,[{-}0.70\%B, {+}15.67\%A] & 55.58$\pm$2.01(22) & 68.66$\pm$0.00(1) & 68.07$\pm$0.00(3) & 60.29$\pm$5.14(11) & 55.79$\pm$0.50(21) & 67.20$\pm$0.00(4) & 63.80$\pm$0.07(7) & 59.30$\pm$0.09(15) & 54.88$\pm$0.19(23) & 67.06$\pm$0.12(5) \\
+				imdb & 52.25$\pm$0.73(2)\,[{-}0.17\%B, {+}5.11\%A] & 50.93$\pm$1.00(9) & 50.43$\pm$0.00(11) & 50.08$\pm$0.00(12) & 50.84$\pm$6.24(10) & 52.34$\pm$0.49(1) & 49.57$\pm$0.00(16) & 49.94$\pm$0.01(14.5) & 47.91$\pm$0.10(26) & 51.26$\pm$0.10(6) & 49.53$\pm$0.10(17.5) \\
+				agnews & 72.44$\pm$5.52(3)\,[{-}2.95\%B, {+}22.77\%A] & 59.13$\pm$3.10(12) & 67.98$\pm$0.00(4.5) & 67.05$\pm$0.00(6) & 60.96$\pm$3.69(9) & 62.55$\pm$0.47(8) & 74.58$\pm$0.00(2) & 62.82$\pm$0.07(7) & 57.82$\pm$0.12(16) & 58.43$\pm$0.07(14.5) & 74.64$\pm$0.09(1) \\
+				20news & 61.37$\pm$9.36(4)\,[{-}3.66\%B, {+}8.28\%A] & 63.70$\pm$3.58(1) & 59.97$\pm$0.74(8) & 57.36$\pm$0.66(11) & 56.93$\pm$1.46(13) & 61.30$\pm$1.05(5) & 60.19$\pm$0.62(7) & 57.10$\pm$1.23(12) & 54.88$\pm$0.52(18) & 59.47$\pm$0.80(10) & 60.25$\pm$0.70(6) \\
+				amazon & 62.01$\pm$0.41(1)\,[{+}1.96\%B, {+}16.45\%A] & 55.43$\pm$0.66(13) & 60.82$\pm$0.00(2) & 60.58$\pm$0.00(3) & 54.74$\pm$4.18(17) & 54.21$\pm$0.22(18) & 57.88$\pm$0.00(7) & 58.17$\pm$0.12(5) & 55.09$\pm$0.10(15) & 52.01$\pm$0.06(22) & 57.94$\pm$0.04(6) \\
+				internetads & 90.76$\pm$0.32(1)\,[{+}8.18\%B, {+}41.36\%A] & 83.90$\pm$3.56(2) & 69.96$\pm$2.22(10) & 68.08$\pm$0.00(12) & 55.64$\pm$7.12(22) & 72.20$\pm$0.55(5) & 71.72$\pm$0.00(6) & 65.16$\pm$0.08(18) & 65.76$\pm$0.06(15) & 75.94$\pm$0.11(3) & 71.38$\pm$2.32(7) \\
+				\bottomrule
+			\end{tabular}%
+		}
+	\end{table*}
+
+	\begin{table*}[htbp]
+		\centering
+		\tiny
+		\setlength{\tabcolsep}{1.5pt}
+		\caption{PR-AUC comparison on ADBench datasets. We report mean$\pm$std over five runs (five different seeds). Numbers in parentheses denote the per-dataset rank among all 29 methods (uLEAD-TabPFN and all 28 PR-AUC baselines, as DDAE reports PR-AUC only). uLEAD-TabPFN additionally reports the relative change compared to the best baseline (\%B) and the average baseline (\%A). Per-dataset ranks and relative changes are computed over the full baseline pool; for readability, the table displays uLEAD-TabPFN and a fixed subset of high-performing baseline columns selected by aggregate mean PR-AUC over the 57 datasets.}
+		\label{tab:prauc_top10}
+		\renewcommand{\arraystretch}{0.85}
+		\resizebox{\textwidth}{!}{%
+			\begin{tabular}{lccccccccccc}
+				\toprule
+				Dataset & uLEAD-TabPFN & DDAE & CAIT & DTE-NP & FoMo-0D & kNN & ICL & DDPM & LOF & SLAD & OCSVM \\
+				\midrule
+				skin & 86.77$\pm$8.03(5)\,[{-}12.40\%B, {+}44.57\%A] & 92.23$\pm$0.01(4) & 99.06$\pm$0.31(1) & 94.78$\pm$2.33(3) & 51.04$\pm$1.72(19) & 98.24$\pm$0.41(2) & 32.46$\pm$1.00(26) & 76.37$\pm$5.79(7) & 61.68$\pm$1.85(16) & 78.73$\pm$7.88(6) & 66.31$\pm$0.51(11) \\
+				smtp & 33.48$\pm$6.18(16)\,[{-}50.77\%B, {+}8.01\%A] & 46.23$\pm$0.08(13) & 50.43$\pm$14.44(6) & 50.20$\pm$6.39(7) & 38.18$\pm$9.90(15) & 50.53$\pm$5.92(5) & 3.81$\pm$3.83(22) & 40.81$\pm$13.36(14) & 48.09$\pm$7.38(12) & 50.60$\pm$6.30(4) & 64.51$\pm$11.88(2) \\
+				http & 48.70$\pm$1.46(20)\,[{-}51.30\%B, {-}23.04\%A] & 99.25$\pm$0.01(4) & 82.91$\pm$6.84(13) & 97.10$\pm$4.04(6) & 90.58$\pm$5.01(9) & 100.00$\pm$0.00(1) & 70.82$\pm$42.06(14) & 99.96$\pm$0.06(2) & 97.12$\pm$3.92(5) & 88.09$\pm$7.46(12) & 99.88$\pm$0.26(3) \\
+				wilt & 84.63$\pm$5.63(1)\,[{+}9.26\%B, {+}476.64\%A] & 14.79$\pm$0.02(10) & 30.96$\pm$3.61(3) & 12.20$\pm$1.60(12) & 77.46$\pm$0.00(2) & 12.25$\pm$0.00(11) & 28.94$\pm$3.31(4) & 17.24$\pm$0.46(7) & 15.74$\pm$0.00(9) & 12.17$\pm$0.04(13) & 7.12$\pm$0.00(26) \\
+				vertebral & 22.33$\pm$2.84(16)\,[{-}67.82\%B, {-}14.86\%A] & 27.75$\pm$0.04(7) & 21.59$\pm$2.07(18) & 25.21$\pm$8.90(10) & 69.39$\pm$3.97(1) & 26.11$\pm$2.49(8) & 58.75$\pm$7.30(2) & 35.84$\pm$9.27(3) & 33.87$\pm$4.30(4) & 19.87$\pm$4.37(23) & 22.23$\pm$2.01(17) \\
+				annthyroid & 45.90$\pm$3.90(22)\,[{-}34.97\%B, {-}14.43\%A] & 56.88$\pm$0.02(14) & 60.97$\pm$3.02(9) & 68.15$\pm$0.38(2) & 48.81$\pm$0.00(19) & 68.07$\pm$0.00(3) & 45.83$\pm$2.16(23) & 62.88$\pm$2.59(7) & 53.53$\pm$0.00(17) & 70.58$\pm$0.92(1) & 60.11$\pm$0.00(10) \\
+				mammography & 28.64$\pm$3.46(17)\,[{-}48.12\%B, {-}10.87\%A] & 35.21$\pm$0.07(14) & 47.61$\pm$2.55(3) & 42.09$\pm$0.86(5) & 36.28$\pm$1.26(13) & 41.27$\pm$0.00(8) & 17.11$\pm$3.75(27) & 19.93$\pm$3.92(24) & 34.07$\pm$0.00(15) & 18.98$\pm$1.05(25) & 40.52$\pm$0.00(10) \\
+				thyroid & 56.84$\pm$9.20(24)\,[{-}30.87\%B, {-}17.21\%A] & 67.34$\pm$0.03(17) & 71.17$\pm$7.44(15) & 81.03$\pm$0.31(5) & 67.00$\pm$0.00(18) & 80.94$\pm$0.00(6) & 51.51$\pm$12.75(27) & 82.22$\pm$0.87(1) & 60.57$\pm$0.00(23) & 74.07$\pm$0.84(14) & 78.92$\pm$0.00(10) \\
+				glass & 29.61$\pm$8.62(14)\,[{-}67.94\%B, {-}12.48\%A] & 31.47$\pm$0.07(11) & 29.43$\pm$7.41(15) & 37.38$\pm$15.51(8) & 83.60$\pm$4.63(2) & 42.32$\pm$8.47(5) & 92.35$\pm$8.32(1) & 31.21$\pm$11.30(12) & 38.12$\pm$9.91(7) & 41.15$\pm$3.98(6) & 26.76$\pm$7.68(17) \\
+				yeast & 55.76$\pm$1.16(2)\,[{-}17.77\%B, {+}12.68\%A] & 67.81$\pm$0.02(1) & 48.08$\pm$1.52(21) & 48.12$\pm$0.49(20) & 51.00$\pm$0.00(6) & 48.26$\pm$0.00(19) & 49.55$\pm$1.36(13) & 51.05$\pm$1.65(5) & 48.94$\pm$0.00(18) & 50.56$\pm$0.08(9) & 47.95$\pm$0.00(22) \\
+				pima & 65.24$\pm$4.65(20)\,[{-}20.91\%B, {-}5.21\%A] & 82.49$\pm$0.02(1) & 71.54$\pm$2.23(10) & 79.70$\pm$2.44(2) & 79.27$\pm$1.74(3) & 75.37$\pm$2.99(6) & 78.63$\pm$1.94(4) & 71.18$\pm$2.06(13.5) & 68.40$\pm$3.79(18) & 63.03$\pm$4.45(23) & 71.98$\pm$3.41(9) \\
+				stamps & 51.52$\pm$9.84(20)\,[{-}42.35\%B, {-}11.27\%A] & 73.81$\pm$0.12(4) & 62.59$\pm$4.91(10) & 82.47$\pm$4.08(2) & 89.37$\pm$3.50(1) & 71.68$\pm$8.35(5) & 79.54$\pm$5.44(3) & 64.74$\pm$12.87(9) & 64.84$\pm$8.17(8) & 50.61$\pm$13.26(21) & 64.91$\pm$7.95(7) \\
+				wbc & 53.93$\pm$5.84(26)\,[{-}45.05\%B, {-}31.49\%A] & 87.83$\pm$0.03(15) & 67.13$\pm$12.98(23) & 96.10$\pm$2.17(4) & 96.46$\pm$2.49(3) & 92.01$\pm$3.96(12) & 95.12$\pm$5.14(5) & 93.84$\pm$2.45(8) & 24.89$\pm$3.49(27) & 98.14$\pm$1.35(1) & 97.15$\pm$0.77(2) \\
+				breastw & 79.90$\pm$3.24(26)\,[{-}19.71\%B, {-}14.01\%A] & 99.51$\pm$0.00(1) & 98.31$\pm$0.49(16) & 99.19$\pm$0.14(6.5) & 99.03$\pm$0.34(12) & 98.92$\pm$0.32(13) & 96.79$\pm$1.61(20) & 98.60$\pm$0.51(15) & 80.01$\pm$10.09(25) & 99.47$\pm$0.21(3) & 99.35$\pm$0.21(5) \\
+				shuttle & 98.53$\pm$0.31(7)\,[{-}1.22\%B, {+}13.42\%A] & 99.11$\pm$0.00(4) & 98.99$\pm$0.19(5) & 98.14$\pm$0.48(8) & 99.36$\pm$0.17(3) & 97.86$\pm$0.00(13) & 99.72$\pm$0.14(2) & 97.91$\pm$0.26(12) & 99.75$\pm$0.00(1) & 98.04$\pm$0.01(10) & 97.67$\pm$0.00(14) \\
+				magic.gamma & 85.62$\pm$1.41(9)\,[{-}8.50\%B, {+}8.97\%A] & 93.57$\pm$0.00(1) & 90.80$\pm$0.34(2) & 86.15$\pm$0.74(7) & 87.54$\pm$0.18(4) & 85.86$\pm$0.00(8) & 81.33$\pm$0.57(11) & 87.97$\pm$0.84(3) & 86.36$\pm$0.00(6) & 77.34$\pm$0.01(16) & 79.16$\pm$0.00(14) \\
+				pageblocks & 81.89$\pm$3.04(3)\,[{-}3.85\%B, {+}32.99\%A] & 85.04$\pm$0.01(2) & 85.17$\pm$2.42(1) & 67.45$\pm$0.10(11) & 62.67$\pm$0.00(16) & 67.60$\pm$0.00(10) & 68.11$\pm$2.30(9) & 62.10$\pm$0.95(17) & 71.07$\pm$0.00(6) & 64.70$\pm$0.79(12) & 64.25$\pm$0.00(13) \\
+				donors & 99.88$\pm$0.11(1)\,[{+}1.16\%B, {+}99.35\%A] & 98.73$\pm$0.01(2) & 86.96$\pm$5.82(6) & 85.55$\pm$4.56(7) & 98.43$\pm$0.48(3) & 89.09$\pm$0.94(5) & 98.35$\pm$0.87(4) & 26.66$\pm$2.91(25) & 63.39$\pm$1.89(10) & 46.18$\pm$9.80(13) & 42.71$\pm$0.86(15) \\
+				cover & 36.55$\pm$4.25(9)\,[{-}57.03\%B, {+}20.41\%A] & 79.50$\pm$0.02(3) & 85.07$\pm$2.89(1) & 59.97$\pm$10.57(7) & 72.57$\pm$8.38(6) & 55.79$\pm$3.74(8) & 34.48$\pm$16.39(10) & 73.27$\pm$3.36(5) & 82.92$\pm$2.19(2) & 6.96$\pm$5.18(22) & 22.28$\pm$1.01(14) \\
+				vowels & 79.51$\pm$8.49(3)\,[{-}15.99\%B, {+}207.01\%A] & 94.64$\pm$0.02(1) & 87.57$\pm$5.75(2) & 31.59$\pm$1.59(9) & 24.10$\pm$0.00(13) & 30.21$\pm$0.00(10) & 27.39$\pm$5.75(12) & 42.72$\pm$4.80(5) & 33.09$\pm$0.00(7) & 39.23$\pm$1.65(6) & 27.43$\pm$0.00(11) \\
+				wine & 82.77$\pm$18.44(13)\,[{-}17.23\%B, {+}10.06\%A] & 79.15$\pm$0.06(15) & 96.80$\pm$2.70(5) & 96.80$\pm$5.58(6) & 99.62$\pm$0.77(2) & 95.11$\pm$1.81(7) & 98.26$\pm$3.89(3) & 97.65$\pm$0.72(4) & 89.95$\pm$2.64(8) & 100.00$\pm$0.00(1) & 88.68$\pm$2.29(9.5) \\
+				pendigits & 71.43$\pm$11.94(7)\,[{-}26.35\%B, {+}53.02\%A] & 92.65$\pm$0.01(2) & 88.36$\pm$4.60(4) & 91.89$\pm$3.30(3) & 66.33$\pm$0.00(9) & 96.99$\pm$0.00(1) & 66.41$\pm$7.58(8) & 61.14$\pm$4.73(10) & 78.55$\pm$0.00(6) & 35.35$\pm$0.15(19) & 51.78$\pm$0.00(12) \\
+				lymphography & 66.31$\pm$19.50(27)\,[{-}33.69\%B, {-}25.17\%A] & 92.52$\pm$0.08(20) & 72.59$\pm$3.87(26) & 99.34$\pm$0.93(3.5) & 99.15$\pm$1.26(7) & 99.17$\pm$0.94(6) & 100.00$\pm$0.00(1.5) & 99.30$\pm$1.02(5) & 84.16$\pm$4.27(23) & 99.34$\pm$0.12(3.5) & 100.00$\pm$0.00(1.5) \\
+				hepatitis & 58.35$\pm$5.37(17)\,[{-}41.55\%B, {-}14.35\%A] & 54.92$\pm$0.07(22) & 38.06$\pm$3.91(28) & 82.32$\pm$10.26(9) & 99.45$\pm$1.10(3) & 90.31$\pm$4.36(6) & 99.83$\pm$0.38(1) & 95.14$\pm$1.34(5) & 43.67$\pm$10.79(27) & 99.79$\pm$0.47(2) & 77.63$\pm$3.49(10) \\
+				cardiotocography & 63.69$\pm$2.92(9)\,[{-}8.61\%B, {+}9.51\%A] & 68.19$\pm$0.02(5) & 64.77$\pm$3.21(8) & 58.68$\pm$1.14(16) & 63.55$\pm$0.00(10) & 57.43$\pm$0.00(17) & 48.66$\pm$3.84(26) & 51.31$\pm$1.98(23) & 57.32$\pm$0.00(18) & 49.37$\pm$0.19(25) & 66.19$\pm$0.00(7) \\
+				waveform & 20.36$\pm$4.07(8)\,[{-}33.59\%B, {+}45.10\%A] & 21.00$\pm$0.04(7) & 14.89$\pm$2.87(11) & 27.87$\pm$0.00(3) & 9.95$\pm$0.00(16) & 27.00$\pm$0.00(4) & 18.63$\pm$4.08(10) & 9.31$\pm$1.05(18) & 30.66$\pm$0.00(1) & 5.31$\pm$0.01(29) & 10.91$\pm$0.00(14) \\
+				cardio & 64.76$\pm$5.37(23)\,[{-}24.92\%B, {-}7.57\%A] & 79.60$\pm$0.02(7) & 73.93$\pm$2.62(14) & 77.41$\pm$0.85(11) & 78.92$\pm$0.00(8) & 77.22$\pm$0.00(12) & 47.91$\pm$11.47(27) & 69.28$\pm$0.91(19) & 70.15$\pm$0.00(17) & 69.94$\pm$0.98(18) & 83.59$\pm$0.00(4) \\
+				fault & 73.05$\pm$0.79(3)\,[{-}17.49\%B, {+}20.00\%A] & 88.53$\pm$0.01(1) & 77.08$\pm$1.23(2) & 62.17$\pm$0.14(10) & 63.08$\pm$0.00(8) & 61.98$\pm$0.00(12) & 63.18$\pm$0.70(7) & 64.75$\pm$0.69(5) & 50.44$\pm$0.00(29) & 66.69$\pm$0.19(4) & 61.12$\pm$0.00(14) \\
+				aloi & 10.39$\pm$0.41(2)\,[{-}7.18\%B, {+}60.21\%A] & 8.71$\pm$0.00(3) & 11.19$\pm$0.30(1) & 6.05$\pm$0.06(17) & 6.93$\pm$0.05(6) & 6.02$\pm$0.00(18) & 5.50$\pm$0.13(28) & 5.97$\pm$0.06(20) & 6.54$\pm$0.00(9) & 5.99$\pm$0.04(19) & 6.52$\pm$0.00(11) \\
+				fraud & 71.63$\pm$5.21(1)\,[{+}3.50\%B, {+}78.61\%A] & 48.24$\pm$0.04(13) & 52.55$\pm$5.36(10) & 42.10$\pm$7.63(15) & 55.13$\pm$13.77(7) & 38.68$\pm$7.19(16) & 53.88$\pm$8.78(9) & 69.21$\pm$3.46(2) & 55.09$\pm$8.19(8) & 44.97$\pm$5.43(14) & 29.64$\pm$5.04(21) \\
+				wdbc & 69.98$\pm$3.65(20)\,[{-}26.80\%B, {-}3.14\%A] & 65.13$\pm$0.08(22) & 80.64$\pm$9.96(14) & 90.47$\pm$7.91(5) & 93.82$\pm$8.30(2) & 82.03$\pm$3.28(13) & 95.60$\pm$6.12(1) & 84.30$\pm$4.44(9) & 93.64$\pm$3.06(4) & 89.08$\pm$6.97(6) & 87.44$\pm$5.59(7) \\
+				letter & 67.90$\pm$5.78(2)\,[{-}17.26\%B, {+}357.60\%A] & 82.06$\pm$0.05(1) & 66.62$\pm$3.31(3) & 8.57$\pm$0.13(20) & 9.33$\pm$0.00(13) & 8.70$\pm$0.00(19) & 12.80$\pm$1.17(7) & 9.53$\pm$0.51(12) & 11.26$\pm$0.00(9) & 8.93$\pm$0.05(15.5) & 8.26$\pm$0.00(23) \\
+				ionosphere & 96.34$\pm$1.16(14)\,[{-}2.75\%B, {+}5.14\%A] & 98.41$\pm$0.00(3) & 98.65$\pm$0.20(2) & 98.22$\pm$1.02(4) & 97.75$\pm$0.76(7) & 97.95$\pm$0.69(6) & 99.06$\pm$0.32(1) & 96.43$\pm$0.50(13) & 94.58$\pm$1.57(18) & 95.38$\pm$0.51(15.5) & 97.45$\pm$0.53(9) \\
+				wpbc & 38.40$\pm$2.32(23)\,[{-}57.00\%B, {-}21.91\%A] & 47.16$\pm$0.03(8) & 39.65$\pm$1.56(21) & 69.02$\pm$13.91(5) & 67.36$\pm$4.34(6) & 46.11$\pm$2.74(10) & 89.31$\pm$5.37(1) & 54.61$\pm$3.75(7) & 41.20$\pm$2.62(15) & 87.45$\pm$6.21(2) & 40.88$\pm$3.04(17) \\
+				satellite & 86.73$\pm$0.41(6)\,[{-}6.28\%B, {+}6.60\%A] & 92.54$\pm$0.00(1) & 87.87$\pm$0.84(4) & 85.83$\pm$0.72(10) & 88.05$\pm$0.00(3) & 86.01$\pm$0.00(8) & 87.62$\pm$0.24(5) & 85.09$\pm$0.18(12) & 85.86$\pm$0.00(9) & 88.64$\pm$0.07(2) & 80.90$\pm$0.00(17) \\
+				satimage-2 & 93.41$\pm$2.80(11)\,[{-}4.98\%B, {+}9.55\%A] & 93.29$\pm$0.03(12) & 91.05$\pm$7.59(17) & 96.16$\pm$0.00(5) & 92.78$\pm$0.00(14) & 96.69$\pm$0.00(4) & 94.70$\pm$1.19(8) & 88.05$\pm$5.10(20) & 88.46$\pm$0.00(19) & 95.44$\pm$0.23(7) & 96.92$\pm$0.00(2) \\
+				landsat & 55.01$\pm$0.34(7)\,[{-}15.68\%B, {+}23.79\%A] & 65.24$\pm$0.01(1) & 57.81$\pm$3.17(6) & 54.52$\pm$4.05(9) & 58.24$\pm$0.00(5) & 54.85$\pm$0.00(8) & 53.12$\pm$1.57(10) & 34.83$\pm$0.91(24) & 61.37$\pm$0.00(3) & 45.10$\pm$0.17(13) & 37.01$\pm$0.00(20) \\
+				celeba & 10.50$\pm$0.51(16)\,[{-}49.88\%B, {-}10.29\%A] & 11.49$\pm$0.01(13) & 8.64$\pm$1.08(20) & 10.65$\pm$0.49(15) & 8.39$\pm$0.38(21) & 11.92$\pm$0.50(11) & 9.74$\pm$0.68(17) & 18.03$\pm$2.60(6) & 3.61$\pm$0.15(28) & 2.90$\pm$0.92(29) & 20.27$\pm$0.90(3) \\
+				spambase & 80.69$\pm$1.87(17)\,[{-}14.08\%B, {+}1.58\%A] & 93.91$\pm$0.00(1) & 87.77$\pm$1.04(3) & 83.65$\pm$0.58(7) & 80.99$\pm$0.00(16) & 83.32$\pm$0.00(9) & 86.78$\pm$0.59(4) & 72.89$\pm$0.42(25) & 72.71$\pm$0.00(26) & 85.64$\pm$0.14(5) & 82.19$\pm$0.00(10) \\
+				campaign & 46.22$\pm$1.73(16)\,[{-}13.66\%B, {+}9.59\%A] & 53.53$\pm$0.01(1) & 48.33$\pm$2.35(13) & 49.95$\pm$0.67(3) & 34.24$\pm$0.47(23) & 49.04$\pm$0.00(7) & 48.90$\pm$0.98(8) & 48.87$\pm$0.29(9) & 40.24$\pm$0.00(19) & 48.11$\pm$0.12(14) & 49.43$\pm$0.00(6) \\
+				optdigits & 18.96$\pm$7.15(13)\,[{-}62.78\%B, {-}4.71\%A] & 39.69$\pm$0.02(6) & 50.36$\pm$12.19(2) & 31.75$\pm$4.86(9) & 31.88$\pm$0.00(8) & 29.11$\pm$0.00(10) & 50.94$\pm$8.59(1) & 25.56$\pm$4.25(11) & 43.63$\pm$0.00(3) & 36.30$\pm$0.94(7) & 6.92$\pm$0.00(19) \\
+				mnist & 64.59$\pm$4.98(14)\,[{-}24.32\%B, {+}15.02\%A] & 77.11$\pm$0.02(2) & 85.35$\pm$2.09(1) & 73.68$\pm$1.31(3) & 57.97$\pm$0.00(18) & 72.72$\pm$0.00(4) & 68.45$\pm$1.63(7) & 62.42$\pm$4.39(16) & 70.97$\pm$0.00(5) & 68.39$\pm$0.46(8) & 66.20$\pm$0.00(10) \\
+				musk & 100.00$\pm$0.00(8.5)\,[{+}0.00\%B, {+}13.26\%A] & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 97.00$\pm$2.27(20) & 100.00$\pm$0.00(8.5) & 92.21$\pm$6.32(22) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) & 100.00$\pm$0.00(8.5) \\
+				backdoor & 89.90$\pm$0.72(1)\,[{+}0.81\%B, {+}184.76\%A] & 89.01$\pm$0.00(3) & 88.84$\pm$0.20(4) & 45.70$\pm$12.50(10) & 43.86$\pm$14.97(11) & 46.54$\pm$1.41(9) & 89.18$\pm$1.04(2) & 14.20$\pm$0.63(16) & 53.47$\pm$2.60(7) & 4.83$\pm$0.10(29) & 7.66$\pm$0.06(23) \\
+				speech & 4.79$\pm$0.46(2)\,[{-}4.77\%B, {+}48.69\%A] & 5.03$\pm$0.01(1) & 4.19$\pm$0.41(3) & 3.17$\pm$0.00(13) & 2.94$\pm$0.31(19) & 2.80$\pm$0.00(23) & 3.38$\pm$0.50(8.5) & 3.00$\pm$0.29(16) & 3.15$\pm$0.00(14) & 3.10$\pm$0.06(15) & 2.78$\pm$0.00(25) \\
+				census & 18.88$\pm$0.88(11)\,[{-}34.85\%B, {+}13.58\%A] & 21.71$\pm$0.01(2) & 14.57$\pm$0.52(19) & 21.05$\pm$0.67(5) & 16.01$\pm$2.97(13) & 21.68$\pm$0.63(3) & 21.20$\pm$0.61(4) & 19.67$\pm$0.60(10) & 13.71$\pm$0.42(23) & 14.96$\pm$4.41(16) & 20.32$\pm$0.66(7) \\
+				CIFAR10 & 16.84$\pm$2.25(19)\,[{-}29.56\%B, {-}4.86\%A] & 21.01$\pm$0.00(5) & 23.91$\pm$0.49(1) & 19.91$\pm$0.00(8) & 17.45$\pm$0.52(16) & 19.62$\pm$0.00(10) & 17.39$\pm$0.59(17) & 19.55$\pm$0.08(11) & 22.17$\pm$0.00(4) & 19.98$\pm$0.07(7) & 19.42$\pm$0.00(12) \\
+				SVHN & 14.46$\pm$1.53(17)\,[{-}12.79\%B, {+}3.58\%A] & 16.58$\pm$0.00(1) & 16.20$\pm$0.65(2) & 15.53$\pm$0.00(6) & 14.67$\pm$0.33(16) & 15.34$\pm$0.00(8) & 15.60$\pm$0.31(5) & 15.08$\pm$0.04(10) & 15.97$\pm$0.00(4) & 15.40$\pm$0.26(7) & 15.00$\pm$0.00(12) \\
+				MVTec-AD & 73.05$\pm$14.04(16)\,[{-}24.04\%B, {+}0.15\%A] & 78.66$\pm$0.01(8) & 96.17$\pm$0.55(1) & 82.94$\pm$2.68(6) & 73.25$\pm$1.79(15) & 75.76$\pm$2.71(11) & 89.46$\pm$2.23(3) & 73.66$\pm$2.72(14) & 75.79$\pm$2.95(9) & 87.91$\pm$2.31(4) & 73.03$\pm$2.82(17) \\
+				FashionMNIST & 59.30$\pm$20.52(8)\,[{-}7.26\%B, {+}26.39\%A] & 59.81$\pm$0.01(4) & 42.48$\pm$2.48(21) & 59.79$\pm$0.00(5) & 52.19$\pm$2.78(16) & 59.15$\pm$0.00(9) & 63.08$\pm$0.96(3) & 57.14$\pm$0.12(11) & 63.61$\pm$0.00(2) & 59.60$\pm$0.17(7) & 56.53$\pm$0.00(13) \\
+				MNIST-C & 56.98$\pm$22.01(1)\,[{+}9.26\%B, {+}67.10\%A] & 51.24$\pm$0.00(5) & 9.28$\pm$0.12(28) & 47.42$\pm$0.00(6) & 38.40$\pm$3.34(16) & 46.20$\pm$0.00(8) & 51.47$\pm$1.10(4) & 41.78$\pm$0.12(11) & 51.89$\pm$0.00(3) & 46.89$\pm$0.14(7) & 41.57$\pm$0.00(12) \\
+				yelp & 15.94$\pm$1.27(6)\,[{-}12.13\%B, {+}24.77\%A] & 18.14$\pm$0.00(1) & 11.46$\pm$0.57(21) & 16.35$\pm$0.00(2) & 13.90$\pm$3.00(7) & 16.03$\pm$0.00(5) & 10.40$\pm$0.09(24) & 12.80$\pm$0.02(16) & 16.14$\pm$0.00(3) & 9.96$\pm$0.05(27) & 13.42$\pm$0.00(10) \\
+				imdb & 9.40$\pm$0.25(11)\,[{-}51.27\%B, {-}2.01\%A] & 9.23$\pm$0.00(13) & 9.49$\pm$0.23(9) & 8.97$\pm$0.00(18.5) & 10.53$\pm$2.36(2) & 8.92$\pm$0.00(21) & 10.24$\pm$0.13(4) & 8.70$\pm$0.02(28) & 9.03$\pm$0.00(15.5) & 9.79$\pm$0.03(6) & 8.85$\pm$0.00(22) \\
+				agnews & 26.03$\pm$5.84(1)\,[{+}0.50\%B, {+}88.87\%A] & 24.88$\pm$0.00(4) & 13.42$\pm$1.52(11) & 17.35$\pm$0.00(5) & 15.16$\pm$3.17(8) & 16.68$\pm$0.00(6) & 15.42$\pm$0.38(7) & 11.85$\pm$0.03(18) & 25.86$\pm$0.00(3) & 12.30$\pm$0.06(15) & 12.82$\pm$0.00(12) \\
+				20news & 17.02$\pm$8.08(2)\,[{-}8.94\%B, {+}32.93\%A] & 18.69$\pm$0.00(1) & 13.97$\pm$1.61(8) & 15.61$\pm$1.35(3) & 13.51$\pm$0.84(11) & 13.47$\pm$0.52(12) & 14.62$\pm$0.88(7) & 11.48$\pm$0.44(21) & 15.04$\pm$0.67(5) & 13.59$\pm$0.34(10) & 11.83$\pm$0.52(17) \\
+				amazon & 12.01$\pm$0.42(2)\,[{-}6.46\%B, {+}11.75\%A] & 12.84$\pm$0.00(1) & 10.82$\pm$0.20(15) & 11.73$\pm$0.00(3) & 11.10$\pm$1.46(8.5) & 11.69$\pm$0.00(5) & 10.19$\pm$0.08(22) & 10.76$\pm$0.02(17) & 11.04$\pm$0.00(13) & 9.74$\pm$0.02(26) & 11.06$\pm$0.00(11.5) \\
+				internetads & 89.06$\pm$0.42(1)\,[{+}5.35\%B, {+}80.44\%A] & 84.54$\pm$0.02(2) & 81.72$\pm$3.79(3) & 51.30$\pm$2.02(11) & 38.29$\pm$5.22(24) & 49.22$\pm$0.00(14) & 60.03$\pm$1.39(7) & 47.70$\pm$0.16(16) & 50.43$\pm$0.00(12) & 60.52$\pm$1.05(6) & 48.15$\pm$0.00(15) \\
+				\bottomrule
+			\end{tabular}%
+		}
+	\end{table*}
+
+	Table \ref{tab:wilcoxon_pvalues} reports one-sided Wilcoxon signed-rank test results for the alternative that uLEAD-TabPFN outperforms a given method, under ROC-AUC and PR-AUC. Tests are conducted separately for low-, medium-, and high-dimensional dataset groups, as well as across all datasets, and the ``Wins'' column counts significant wins over all baselines. uLEAD-TabPFN significantly outperforms DisentAD in the medium-, high-, and all-dataset settings, and its significant advantages over the remaining methods are most frequent in the high-dimensional setting. Against CAIT, the test does not reach significance in any group: CAIT is stronger on low- and medium-dimensional data, while in the high-dimensional setting uLEAD-TabPFN is ahead on average but the difference is not statistically significant ($p{=}0.08$ for ROC-AUC and $p{=}0.06$ for PR-AUC).
+
+	\begin{table*}[htbp]
+		\centering
+		\caption{One-sided Wilcoxon signed-rank test $p$-values for the alternative that \textbf{uLEAD-TabPFN} outperforms each method, grouped by feature dimensionality. Columns show selected baselines used in the significance summary. The ``Wins'' column reports, out of all baselines (27 for ROC-AUC and 28 for PR-AUC), how many uLEAD-TabPFN significantly outperforms in that group. Statistical significance is indicated by $^{*}p<0.05$, $^{**}p<0.01$, and $^{***}p<0.001$.}
+		\label{tab:wilcoxon_pvalues}
+		\resizebox{0.98\textwidth}{!}{
+			\begin{tabular}{l | c | c c | c c c c c c c c c}
+				\toprule
+				\textbf{ROC-AUC} & \textbf{Wins} & CAIT & DisentAD & FoMo-0D & DTE-NP & kNN & ICL & LOF & CBLOF & FeatBag & SLAD & DDPM \\
+				\midrule
+				$p$-value ($d\leq20$) & 6/27 & 0.9553 & 0.0570 & 0.9677 & 0.9865 & 0.9876 & 0.7634 & 0.8202 & 0.8962 & 0.2031 & 0.3420 & 0.8739 \\
+				$p$-value ($20<d\leq100$) & 12/27 & 0.9955 & 0.0024$^{**}$ & 0.5675 & 0.7525 & 0.7387 & 0.4493 & 0.1519 & 0.3830 & 0.1061 & 0.2754 & 0.0594 \\
+				$p$-value ($d>100$) & 21/27 & 0.0789 & 0.0240$^{*}$ & 0.0004$^{***}$ & 0.2352 & 0.0886 & 0.1384 & 0.2163 & 0.0207$^{*}$ & 0.2352 & 0.0320$^{*}$ & 0.0038$^{**}$ \\
+				$p$-value (All) & 18/27 & 0.9290 & 0.0003$^{***}$ & 0.3966 & 0.9477 & 0.9233 & 0.4604 & 0.3328 & 0.3108 & 0.0464$^{*}$ & 0.0357$^{*}$ & 0.1137 \\
+				\midrule\midrule
+
+				\textbf{PR-AUC} & \textbf{Wins} & CAIT & DisentAD & DDAE & FoMo-0D & DTE-NP & kNN & ICL & LOF & SLAD & DDPM & OCSVM \\
+				\midrule
+				$p$-value ($d\leq20$) & 10/28 & 0.9911 & 0.0197$^{*}$ & 0.9997 & 0.9830 & 0.9903 & 0.9911 & 0.6580 & 0.6371 & 0.5279 & 0.8678 & 0.6051 \\
+				$p$-value ($20<d\leq100$) & 14/28 & 0.9506 & 0.0060$^{**}$ & 0.9940 & 0.3830 & 0.7789 & 0.7659 & 0.4831 & 0.3047 & 0.3353 & 0.1733 & 0.2475 \\
+				$p$-value ($d>100$) & 21/28 & 0.0603 & 0.0128$^{*}$ & 0.8187 & 0.0017$^{**}$ & 0.2163 & 0.0789 & 0.1147 & 0.1501 & 0.0368$^{*}$ & 0.0093$^{**}$ & 0.0093$^{**}$ \\
+				$p$-value (All) & 17/28 & 0.9800 & 0.0001$^{***}$ & 1.0000 & 0.6019 & 0.9630 & 0.9432 & 0.3890 & 0.3447 & 0.1805 & 0.3065 & 0.1783 \\
+				\bottomrule
+			\end{tabular}
+		}
+	\end{table*}
+
+	For the complementary omnibus rank analysis, the Friedman test rejects equal performance across all methods over the 57 datasets for both metrics ($p<10^{-70}$). The subsequent Nemenyi test at $\alpha{=}0.05$ places uLEAD-TabPFN within the leading group, with mean ranks of $10.8$ for ROC-AUC and $11.2$ for PR-AUC, and no compared method ranks significantly above it.
+
+	\section{A Detailed Case Study}
+	\label{app:case}
+
+	We present an end-to-end case study on the \textit{Wilt} dataset to illustrate how uLEAD-TabPFN operates in practice, from latent representation learning to dependency-based scoring and interpretation. Wilt is a widely used benchmark for tabular anomaly detection derived from high-resolution remote sensing imagery, where diseased trees correspond to anomalous instances. The dataset consists of five continuous spectral and texture-related features extracted from multispectral and panchromatic image bands, including mean values of the green (Mean-G), red (Mean-R), and near-infrared (Mean-NIR) bands, as well as texture statistics from the panchromatic band (GLCM-Pan) and intensity variation measured by the standard deviation of the panchromatic band (SD-Pan). With a total of 4,819 samples (4,562 normal and 257 anomalous), its low dimensionality and well-defined physical feature semantics make Wilt particularly suitable for a detailed methodological analysis and interpretability study.
+
+	On the Wilt dataset, uLEAD-TabPFN achieves a ROC-AUC of 97.5\% and a PR-AUC of 90.8\%, substantially outperforming existing baseline methods, which typically achieve ROC-AUC values around 60\% and PR-AUC values near 20\%. Relative to the average baseline performance, this corresponds to improvements of 81\% in ROC-AUC and 534\% in PR-AUC.
+
+	The goal of this case study is to understand why uLEAD-TabPFN performs particularly well on this dataset. To this end, we compare uLEAD-TabPFN with the ablated variants introduced in the ablation study of the main paper. Specifically, uLEAD-Original, which operates directly on the original feature space without latent transformation, achieves 84\% ROC-AUC and 43\% PR-AUC. Replacing TabPFN with a CART-based dependency estimator (uLEAD-CART) obtains 86\% ROC-AUC and 51\% PR-AUC. LEAD-TabPFN without uncertainty-aware scoring attains the same ROC-AUC (97.5\%) and PR-AUC (90.8\%) as the full model.
+
+	These results indicate that the dominant performance gains on the Wilt dataset stem from the representation learning and dependency modeling enabled by TabPFN, while uncertainty-aware scoring plays a less critical role in this particular setting. Consequently, the following analysis focuses on understanding how the latent space transformation contributes to improved anomaly detection performance.
+
+	\paragraph{Latent Space Analysis.}
+	\begin{table}[htbp]
+		\centering
+		\caption{Comparison of geometric and neighborhood properties in the original and latent spaces on the Wilt dataset.}
+		\label{tab:latent_distance_analysis}
+		%\small
+		\resizebox{\columnwidth}{!}{%
+			\begin{tabular}{p{3cm}ccp{5cm}}
+				\toprule
+				\textbf{Metric} & \textbf{Original} & \textbf{Latent} & \textbf{Interpretation} \\
+				\midrule
+				Average silhouette score (all samples)
+				& $-0.1402$ & $0.0024$
+				& Normal and anomalous samples are highly overlapping in both spaces, with slightly improved separation in the latent space. \\
+
+				Average distance to nearest normal sample
+				& $0.3316$ & $0.3387$
+				& The separation between normal and anomalous samples remain similar across spaces. \\
+
+				LOF ratio (anomaly / normal)
+				& $1.0383$ & $1.0297$
+				& Density-based contrast remains limited and slightly weaker in the latent space. \\
+
+				Anomalies with anomaly as nearest neighbor
+				& $57.2\%$ & $71.2\%$
+				& Anomalies exhibit stronger local neighborhood coherence in the latent space. \\
+
+				30-NN purity (fraction of anomalies)
+				& $0.2943$ & $0.3926$
+				& Anomalies form more locally coherent neighborhoods in the latent space. \\
+				\bottomrule
+			\end{tabular}
+		}
+	\end{table}
+	We first compare feature dependencies in the original and latent spaces using the Pearson correlation coefficient and the conditional coefficient of determination ($R^2$) estimated with TabPFN. Pearson correlation measures pairwise linear dependence, while conditional $R^2$ quantifies how well each feature can be predicted from the remaining features.
+
+	In the original feature space, the mean absolute Pearson correlation is 0.239, indicating weak pairwise dependencies. After projection into the latent space, this value increases to 0.531 (a 122.4\% relative increase), with the standard deviation rising from 0.317 to 0.581, indicating amplified and more diverse dependency strengths. Consistent with this, the average conditional $R^2$ increases from 0.649 (std. 0.285) in the original space to 0.991 (std. 0.003) in the latent space, which shows that the learned representation makes conditional relationships substantially more predictable and stable in the latent space.
+
+	To examine how normal and anomalous samples are distributed in the original and latent spaces, we compare the two representations using multiple dimensionality reduction techniques, including PCA, t-SNE, and UMAP as shown in Figure~\ref{fig:top_anomalies}.
+
+	\begin{figure*}
+		\centering
+		\includegraphics[width=0.9\linewidth]{top_anomalies}
+		\caption{Visualization of top-5 and bottom-5 anomalies in both the original and latent feature spaces.}
+		\label{fig:top_anomalies}
+	\end{figure*}
+
+	In addition, Table~\ref{tab:latent_distance_analysis} reports complementary quantitative metrics characterizing geometric separation, density contrast, and neighborhood structure in both spaces. Specifically, the silhouette score measures the degree of separation between normal and anomalous samples based on relative intra- and inter-class distances, with values near zero indicating substantial overlap. The distance to the nearest normal sample and the Local Outlier Factor (LOF) ratio capture marginal distance- and density-based distinguishability, while nearest-neighbor anomaly rates and $k$-NN purity quantify local neighborhood coherence among anomalous samples.
+
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=\columnwidth]{umap.png}
+		\caption{
+			UMAP visualization of the Wilt dataset in the original feature space (left) and the learned latent space (right), comparing the data organization before and after the latent transformation.
+		}
+		\label{fig:wilt_umap}
+	\end{figure}
+
+	Figure~\ref{fig:wilt_umap} shows that normal and anomalous samples remain substantially overlapping in both the original and latent spaces, consistent with the near-zero silhouette scores reported in Table~\ref{tab:latent_distance_analysis} (from $-0.140$ in the original space to $0.002$ in the latent space). Likewise, the average distance from anomalous samples to their nearest normal neighbors changes only marginally, from $0.332$ to $0.339$, and density-based contrast remains weak, with the LOF ratio slightly decreasing from $1.038$ to $1.030$. Together, these results indicate that the improved detection performance of uLEAD-TabPFN is not driven by global geometric separation or marginal distance- and density-based cues.
+
+	In contrast, both the visualization and neighborhood-level metrics reveal a clear structural change in the latent space. As reported in Table~\ref{tab:latent_distance_analysis}, the proportion of anomalies whose nearest neighbor is also anomalous increases from $57\%$ to $71\%$, and the fraction of anomalies among the 30 nearest neighbors rises from $0.29$ to $0.39$, indicating stronger local neighborhood coherence among anomalous samples. In addition, the average silhouette score computed over anomalous samples remains positive in both spaces ($0.331$ in the original space and $0.275$ in the latent space), whereas the corresponding scores for normal samples are negative ($-0.167$ and $-0.013$). Together, these results indicate that anomalous samples exhibit more coherent local neighborhood structure than normal samples in both representations, with stronger neighborhood-level coherence in the latent space despite slightly reduced global compactness.
+
+	These results indicate that in the original feature space, anomalies tend to form a single broad cluster that substantially overlaps with normal samples, which limits the effectiveness of distance-, density-, and marginal-distribution-based baseline methods. In contrast, Figure~\ref{fig:wilt_umap} illustrates that anomalous samples in the latent space are organized into multiple locally coherent neighborhoods rather than a single globally compact cluster. Although anomalies are not more geometrically separated from normal samples, the latent representation restructures anomalous instances according to shared dependency violations. This organization aligns naturally with the dependency-based scoring of uLEAD-TabPFN, where anomaly detection is driven by conditional inconsistency rather than marginal distance or density.
+
+
+	\paragraph{Anomaly Interpretation.}
+	uLEAD-TabPFN provides interpretability by design through its explicit dependency-based anomaly scoring mechanism. For a given test sample, the anomaly score is computed as an aggregation of normalized conditional dependency deviations across latent dimensions. Latent dimensions with large contributions correspond to conditional relationships that are unlikely under the learned normal data distribution, making the source of abnormality directly observable at the representation level.
+
+	Crucially, the latent representation is obtained via a linear transformation of the original feature space. As a result, dependency deviations detected in the latent space can be directly traced back to the original input features through the encoder weights, enabling faithful feature-level attribution without relying on post-hoc explanation techniques. This interpretability reflects conditional inconsistency rather than marginal outliers: a feature may appear anomalous not because of its absolute value, but because it violates learned dependencies given the remaining features. This aligns the explanation with the underlying detection mechanism of uLEAD-TabPFN.
+
+	We analyze a representative top-ranked anomaly from the Wilt dataset to illustrate instance-level interpretability. For this sample, the anomaly score is primarily driven by four out of five latent dimensions. Specifically, latent dimensions $Z_0$, $Z_1$, $Z_2$, and $Z_4$ contribute $41.5$, $43.8$, $39.3$, and $32.9$ to the total anomaly score, respectively, while $Z_3$ contributes only $7$.
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=\columnwidth]{anomaly_01_attribution.png}
+		\caption{Feature-level attribution of the anomaly score to the original input features for anomaly~\#1.}
+		\label{fig:anomaly_attribution}
+	\end{figure}
+
+	Figure~\ref{fig:anomaly_attribution} visualizes how these latent-space dependency violations are attributed back to the original input features. Owing to the linear encoder, the contribution of each original feature to the anomaly score can be explicitly quantified. For this anomaly, the strongest attributions correspond to features associated with vegetation condition, such as near-infrared reflectance (Mean-NIR) and panchromatic intensity variation (SD-Pan). Similar attribution patterns are consistently observed across other top-ranked anomalies, as documented in the appendix.
+
+	Overall, this case study demonstrates how uLEAD-TabPFN enables transparent, end-to-end interpretation by linking latent dependency violations, uncertainty-aware scoring, and original feature contributions within a unified framework.
+
+	\begin{table}[htbp]
+		\centering
+		\caption{Raw values, normalized values, and attribution scores across all original features for anomaly~\#1.}
+		\resizebox{1\columnwidth}{!}{
+			\begin{tabular}{lrrrrr}
+				\toprule
+				Metric & GLCM\_Pan & Mean\_G & Mean\_R & Mean\_NIR & SD\_Pan \\
+				\midrule
+				Raw Value & 150.181 & 225.000 & 145.682 & 540.500 & 13.908 \\
+				Raw Percentile & 92.4\% & 56.8\% & 86.7\% & 52.8\% & 14.7\% \\
+				Normalized Value & 2.499 & 0.269 & 3.714 & 0.129 & -1.509 \\
+				Attribution Score & 5.181 & 3.649 & 3.978 & 6.193 & 5.240 \\
+				\bottomrule
+			\end{tabular}
+		}
+		\label{tab:anomaly1_values}
+	\end{table}
+
+	\begin{table}[htbp]
+		\centering
+		\caption{Per-latent-dimension analysis for anomaly~\#1: latent values, predicted conditional means, deviations, variances, negative log-likelihoods, and score contributions.}
+		\resizebox{1\columnwidth}{!}{
+			\begin{tabular}{lrrrrr}
+				\toprule
+				Metric & $Z_0$ & $Z_1$ & $Z_2$ & $Z_3$ & $Z_4$ \\
+				\midrule
+				Latent Value & -1.352 & -0.627 & -1.373 & -0.024 & 0.247 \\
+				Latent Percentile & 12.9\% & 26.6\% & 19.4\% & 61.4\% & 54.6\% \\
+				Conditional Mean & -0.284 & -2.146 & 0.569 & 0.316 & 2.006 \\
+				Residual & 1.068 & 1.519 & 1.942 & 0.340 & 1.760 \\
+				Conditional Variance & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+				NLL & 1.489 & 2.072 & 2.805 & 0.977 & 2.467 \\
+				Contribution & 1.140 & 2.306 & 3.771 & 0.116 & 3.096 \\
+				\bottomrule
+			\end{tabular}
+		}
+		\label{tab:anomaly1_latent}
+	\end{table}
+
+	We analyze the interpretability of the highest-ranked anomaly (Index: 2361, Score: 75.3610).
+	Original feature values for anomaly \#1, including raw values, normalized values, and attribution scores across all features, are reported in Table~\ref{tab:anomaly1_values}.
+
+	Latent feature analysis for anomaly \#1, including latent values, predicted means, deviations, variances, negative log-likelihoods, and per-dimension contributions, is reported in Table~\ref{tab:anomaly1_latent}.
+
+	\section{Latent-Dimension Sensitivity}
+	\label{app:sensitivity}
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=1\columnwidth]{sensitivity.png}
+		\caption{Sensitivity of uLEAD-TabPFN to the latent dimension cap $p$ on datasets with $d \leq 100$. The blue curve (left axis) shows the average ROC-AUC and the red curve (right axis) the average PR-AUC as functions of $p$.}
+		\label{fig:latent_dim}
+	\end{figure}
+
+	uLEAD-TabPFN is deliberately designed with a minimal set of hyperparameters, most of which are fixed across all experiments (see the main paper for details) to avoid dataset-specific tuning.
+	We therefore focus the sensitivity analysis on the primary structural hyperparameter, the latent dimensionality $p$, restricting it to datasets with $d \leq 100$ to avoid confounding the effect of $p$ with the aggressive dimensionality reduction that would be required for datasets with $d > 100$.
+	Figure~\ref{fig:latent_dim} reports the average ROC-AUC and PR-AUC over these datasets as $p$ varies: performance improves rapidly as $p$ increases from small values and stabilizes around $p \approx 40$, with only marginal gains for larger values up to $p = 100$.
+	These results indicate that uLEAD-TabPFN does not require fine-grained tuning of the latent dimensionality and maintains stable performance across a broad range of values.
+
+
+
+	\bibliographystyle{IEEEtran}
+	\bibliography{reference}
+
+
+
+\end{document}

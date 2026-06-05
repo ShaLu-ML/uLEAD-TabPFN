@@ -1,5 +1,5 @@
 """
-Evaluation script for LEAD (Linear Encoder with Dependency Expert) on ADBench datasets.
+Evaluation script for uLEAD-TabPFN on ADBench-format anomaly detection datasets.
 
 Runs the full evaluation pipeline over all ADBench datasets and saves per-dataset metrics
 (ROC-AUC, AP, PR-AUC, F1) to a CSV file.  Expensive TabPFN predictions are cached so that
@@ -567,11 +567,13 @@ def check_results_exist_in_csv(output_csv, dataset_file, seed, mode):
 def parse_args():
     """Parse command-line arguments. All flags override the corresponding config.py value."""
     parser = argparse.ArgumentParser(
-        description='Evaluate LEAD on ADBench anomaly detection datasets.',
+        description='Evaluate uLEAD-TabPFN on ADBench-format anomaly detection datasets.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument('--data-path', type=str, default=None,
                         help='Path to ADBench dataset directory (overrides ADBENCH_DATA_PATH and config.py)')
+    parser.add_argument('--datasets-json', type=str, default=None,
+                        help='Dataset catalog JSON file')
     parser.add_argument('--dataset-id', type=int, default=None,
                         help='Run a single dataset by its numeric ID (None = all datasets)')
     parser.add_argument('--output-csv', type=str, default=None,
@@ -584,6 +586,8 @@ def parse_args():
                         help='Random seeds to evaluate (e.g. --seeds 0 1 2)')
     parser.add_argument('--from-scratch', action='store_true', default=False,
                         help='Ignore cached artifacts and retrain from scratch')
+    parser.add_argument('--no-ddm', action='store_true', default=False,
+                        help='Disable distributional dependency modeling for a faster smoke test')
     parser.add_argument('--device', type=str, default=None, choices=['cuda', 'cpu'],
                         help='Device for PyTorch/TabPFN (default: cuda if available)')
     return parser.parse_args()
@@ -600,6 +604,8 @@ def main():
     if args.data_path is not None:
         from pathlib import Path as _Path
         CONFIG['data_path'] = _Path(args.data_path)
+    if args.datasets_json is not None:
+        CONFIG['datasets_json'] = args.datasets_json
     if args.dataset_id is not None:
         CONFIG['test_data_id'] = args.dataset_id
     if args.output_csv is not None:
@@ -612,6 +618,8 @@ def main():
         CONFIG['seeds'] = args.seeds
     if args.from_scratch:
         CONFIG['from_scratch'] = True
+    if args.no_ddm:
+        CONFIG['use_ddm'] = False
     if args.device is not None:
         CONFIG['device'] = args.device
 
