@@ -1,6 +1,4 @@
-# uLEAD-TabPFN: Anonymous Code and Supplementary Material
-
-This repository contains the anonymous implementation and supplementary material for the ICDM submission **"Uncertainty-aware Dependency-based Anomaly Detection with TabPFN"**.
+# uLEAD-TabPFN: Uncertainty-aware Dependency-based Anomaly Detection with TabPFN
 
 ## Main Idea
 
@@ -166,6 +164,5 @@ pdflatex -interaction=nonstopmode -halt-on-error ulead_icdm_supplementary.tex
 
 ## Notes
 
-- The code is anonymized for review and does not include local machine paths.
 - Full benchmark reproduction requires downloading the external ADBench datasets.
 - The first TabPFN run may download or initialize model assets depending on the local TabPFN installation.
