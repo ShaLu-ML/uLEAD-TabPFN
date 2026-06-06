@@ -20,6 +20,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage[table]{xcolor}
+\usepackage{rotating}
 
 %% Lists and algorithms.
 \usepackage{enumitem}
@@ -40,7 +41,14 @@
 	\maketitle
 
 	\noindent This document provides supplementary material accompanying the main ICDM 2026 submission.
-	It contains dataset statistics, full baseline descriptions and implementation details, pseudocode, complete per-dataset results, statistical significance tables, a detailed case study on the Wilt dataset, and latent-dimension sensitivity results.
+	It is organized as follows.
+	Appendix~\ref{app:datasets} provides dataset statistics for all 57 ADBench datasets.
+	Appendix~\ref{app:baselines} describes all 28 baseline methods.
+	Appendix~\ref{app:implementation} gives implementation details and hyperparameter settings.
+	Appendix~\ref{app:pseudocode} presents pseudocode for the training and inference procedures.
+	Appendix~\ref{app:results} reports complete per-dataset ROC-AUC and PR-AUC results, pairwise Wilcoxon signed-rank test results, and the Friedman/Nemenyi omnibus rank analysis.
+	Appendix~\ref{app:case} presents a detailed case study on the Wilt dataset.
+	Appendix~\ref{app:sensitivity} reports latent-dimension sensitivity results.
 
 	%% ============================================================
 	%% Appendix A - Dataset Details
@@ -49,7 +57,7 @@
 
 	\section{Dataset Details}
 	\label{app:datasets}
-	The dataset information used in the experiments is presented in Table~\ref{tab:datasets}.
+	Table~\ref{tab:datasets} summarizes all 57 ADBench datasets used in the experiments. They span a wide range of dimensionalities (3 to 1555 features), sample sizes (80 to 619326 instances), anomaly ratios, and application domains. Following the main paper, we group datasets into three dimensionality bands: low-dimensional ($d \leq 20$, 24 datasets), medium-dimensional ($20 < d \leq 100$, 18 datasets), and high-dimensional ($d > 100$, 15 datasets).
 
 	\begin{table*}[htbp]
 		\centering
@@ -119,7 +127,7 @@
 				\bottomrule
 			\end{tabular}
 		}
-		\caption{Summary of datasets used for evaluation.}
+		\caption{Summary of the 57 ADBench datasets used for evaluation. Datasets are sorted by category. Low-dimensional: 24 datasets with $d \leq 20$; medium-dimensional: 18 datasets with $20 < d \leq 100$; high-dimensional: 15 datasets with $d > 100$.}
 		\label{tab:datasets}
 	\end{table*}
 
@@ -140,11 +148,26 @@
 	CAIT and DisentAD were evaluated using the author-provided codebases, under the same semi-supervised protocol as uLEAD-TabPFN: normal instances are split $50/50$ into train and test, all anomalies are placed in the test set, and ROC-AUC and PR-AUC are averaged over five seeds. Minor engineering adjustments for numerical stability and batching were applied without changing the evaluation protocol.
 
 	%% ============================================================
-	%% Appendix C – Implementation Details
+	%% Appendix C -- Implementation Details
 	%% ============================================================
 	\section{Implementation Details}
 	\label{app:implementation}
-	The algorithms for training and inference with uLEAD-TabPFN are presented in Algorithms~\ref{alg:train_ulead} and~\ref{alg:infer_ulead}, respectively.
+	
+	uLEAD-TabPFN is designed to minimize hyperparameter tuning. The TabPFN used by uLEAD-TabPFN is kept frozen, and only lightweight components, including a linear encoder and variance networks, are trained. The primary design choice is the latent dimensionality $p$: for datasets with $d \leq 100$, $p$ is set to $d$, while for $d > 100$, it is fixed to $100$. All other parameters are fixed across datasets and seeds.
+	
+	The encoder is trained for 20 epochs using Adam with no weight decay and a batch size of 1024, with the learning rate scheduled from $5\times10^{-4}$ to $10^{-6}$. 
+	For uncertainty-aware scoring, one variance network is trained per latent dimension for 50 epochs using Adam with a learning rate of $10^{-3}$ and weight decay of $10^{-4}$. 
+	The RCS budget is set to 500. 
+	The weights of the dependency loss $\lambda_{\mathrm{dep}}$ and the reconstruction loss $\lambda_{\mathrm{rec}}$ are set to 1 and 0.3, respectively.
+	The training and inference procedures are presented in Algorithms~\ref{alg:train_ulead} and~\ref{alg:infer_ulead} in Appendix~\ref{app:pseudocode}.
+
+	%% ============================================================
+	%% Appendix D – Pseudocode
+	%% ============================================================
+	\section{Pseudocode}
+	\label{app:pseudocode}
+
+	Algorithms~\ref{alg:train_ulead} and~\ref{alg:infer_ulead} present the training and inference procedures for uLEAD-TabPFN, respectively.
 
 	\begin{algorithm}[t]
 		\caption{Training uLEAD-TabPFN}
@@ -224,16 +247,16 @@
 	\end{algorithm}
 
 	%% ============================================================
-	%% Appendix D – Additional Results
+	%% Appendix E -- Additional Results
 	%% ============================================================
 	\section{Additional Results}
 	\label{app:results}
 
-	Tables~\ref{tab:rocaus_top10} and \ref{tab:prauc_top10} report detailed ROC-AUC and PR-AUC results for the proposed method and the baselines. Each row corresponds to one dataset and each column corresponds to one method. We report the mean ROC-AUC or PR-AUC and standard deviation over five runs (five different seeds). The value in parentheses denotes the rank of the method on that dataset (lower is better). Per-dataset ranks are computed over all compared methods; for readability, the table displays uLEAD-TabPFN and a fixed subset of high-performing baseline columns selected by aggregate mean performance over the 57 datasets.
+	Tables~\ref{tab:rocaus_top10} and \ref{tab:prauc_top10} report detailed ROC-AUC and PR-AUC results for uLEAD-TabPFN and the baselines. Each row corresponds to one dataset and each column corresponds to one method. We report the mean ROC-AUC or PR-AUC and standard deviation over five runs (five different seeds). The value in parentheses denotes the rank of the method on that dataset (lower is better). Per-dataset ranks are computed over all compared methods; for readability, the table displays uLEAD-TabPFN and a fixed subset of high-performing baseline columns selected by aggregate mean performance over the 57 datasets.
 
-	For the proposed method, uLEAD-TabPFN, we additionally report two relative changes: (i) the percentage change compared to the best-performing baseline (denoted as \%B), and (ii) the percentage change compared to the average baseline (denoted as \%A). A positive value indicates an improvement and a negative value indicates a degradation. Both quantities, and the per-dataset ranks, are computed over the full baseline pool: all 27 ROC-AUC baselines and all 28 PR-AUC baselines (DDAE reports PR-AUC only).
+	For uLEAD-TabPFN, we additionally report two relative changes: (i) the percentage change compared to the best-performing baseline (denoted as \%B), and (ii) the percentage change compared to the average baseline (denoted as \%A). A positive value indicates an improvement and a negative value indicates a degradation. Both quantities, and the per-dataset ranks, are computed over the full baseline pool: all 27 ROC-AUC baselines and all 28 PR-AUC baselines (DDAE reports PR-AUC only).
 
-	\begin{table*}[htbp]
+	\begin{sidewaystable*}[p]
 		\centering
 		\tiny
 		\setlength{\tabcolsep}{1.5pt}
@@ -305,9 +328,9 @@
 				\bottomrule
 			\end{tabular}%
 		}
-	\end{table*}
+	\end{sidewaystable*}
 
-	\begin{table*}[htbp]
+	\begin{sidewaystable*}[p]
 		\centering
 		\tiny
 		\setlength{\tabcolsep}{1.5pt}
@@ -379,10 +402,13 @@
 				\bottomrule
 			\end{tabular}%
 		}
-	\end{table*}
+	\end{sidewaystable*}
+	
+	\subsection{Pairwise Wilcoxon Signed-Rank Tests}
+	\label{app:wilcoxon}
 
-	Table \ref{tab:wilcoxon_pvalues} reports one-sided Wilcoxon signed-rank test results for the alternative that uLEAD-TabPFN outperforms a given method, under ROC-AUC and PR-AUC. Tests are conducted separately for low-, medium-, and high-dimensional dataset groups, as well as across all datasets, and the ``Wins'' column counts significant wins over all baselines. uLEAD-TabPFN significantly outperforms DisentAD in the medium-, high-, and all-dataset settings, and its significant advantages over the remaining methods are most frequent in the high-dimensional setting. Against CAIT, the test does not reach significance in any group: CAIT is stronger on low- and medium-dimensional data, while in the high-dimensional setting uLEAD-TabPFN is ahead on average but the difference is not statistically significant ($p{=}0.08$ for ROC-AUC and $p{=}0.06$ for PR-AUC).
-
+	Table~\ref{tab:wilcoxon_pvalues} reports one-sided pairwise Wilcoxon signed-rank test $p$-values for the alternative that uLEAD-TabPFN outperforms each baseline, under ROC-AUC and PR-AUC. Tests are conducted separately for low-, medium-, and high-dimensional dataset groups, as well as across all 57 datasets. The ``Wins'' column counts the number of baselines significantly outperformed by uLEAD-TabPFN in that group, out of all 27 ROC-AUC baselines or all 28 PR-AUC baselines; the table displays a selected subset of representative baselines for readability. uLEAD-TabPFN significantly outperforms DisentAD in the medium-, high-, and all-dataset settings, and its significant advantages over the remaining methods are most frequent in the high-dimensional setting. Against CAIT, the test does not reach significance in any group: CAIT is stronger on low- and medium-dimensional data, while in the high-dimensional setting uLEAD-TabPFN is ahead on average but the difference is not statistically significant ($p{=}0.08$ for ROC-AUC and $p{=}0.06$ for PR-AUC).
+	
 	\begin{table*}[htbp]
 		\centering
 		\caption{One-sided Wilcoxon signed-rank test $p$-values for the alternative that \textbf{uLEAD-TabPFN} outperforms each method, grouped by feature dimensionality. Columns show selected baselines used in the significance summary. The ``Wins'' column reports, out of all baselines (27 for ROC-AUC and 28 for PR-AUC), how many uLEAD-TabPFN significantly outperforms in that group. Statistical significance is indicated by $^{*}p<0.05$, $^{**}p<0.01$, and $^{***}p<0.001$.}
@@ -409,25 +435,79 @@
 		}
 	\end{table*}
 
-	For the complementary omnibus rank analysis, the Friedman test rejects equal performance across all methods over the 57 datasets for both metrics ($p<10^{-70}$). The subsequent Nemenyi test at $\alpha{=}0.05$ places uLEAD-TabPFN within the leading group, with mean ranks of $10.8$ for ROC-AUC and $11.2$ for PR-AUC, and no compared method ranks significantly above it.
+	\subsection{Friedman/Nemenyi Omnibus Rank Analysis}
+	\label{app:friedman_nemenyi}
 
-	\section{A Detailed Case Study}
+	The Wilcoxon results above provide dimensionality-stratified pairwise evidence.
+	As a complementary omnibus test, the Friedman test evaluates whether all methods have equal rank distributions over the 57 datasets; a significant result licenses post-hoc pairwise comparisons.
+	The Nemenyi post-hoc test then compares method ranks while explicitly accounting for multiple comparisons across all method pairs.
+
+	Table~\ref{tab:friedman_nemenyi_summary} summarises the results.
+	The Friedman test strongly rejects the null hypothesis of equal rank distributions for both ROC-AUC ($p \approx 3.76\times10^{-75}$, 28 methods) and PR-AUC ($p \approx 1.91\times10^{-78}$, 29 methods).
+	Under the subsequent Nemenyi post-hoc test at $\alpha{=}0.05$, uLEAD-TabPFN achieves mean ranks of $10.84$ (ROC-AUC) and $11.18$ (PR-AUC) out of 28 and 29 methods, respectively.
+	No compared method ranks significantly \emph{above} uLEAD-TabPFN, while 11 methods rank significantly \emph{below} it for both metrics.
+	This result supports the conclusion that uLEAD-TabPFN belongs to the statistically leading group overall.
+	The dimensionality-stratified Wilcoxon results in Table~\ref{tab:wilcoxon_pvalues} provide complementary pairwise evidence and show that the strongest significant gains occur in the high-dimensional regime ($d>100$).
+
+	\begin{table}[t]
+		\centering
+		\caption{Friedman/Nemenyi rank-test summary over all 57 datasets. ``Better'' and ``Worse'' count methods ranked significantly above or below uLEAD-TabPFN under the Nemenyi post-hoc test at $\alpha{=}0.05$.}
+		\label{tab:friedman_nemenyi_summary}
+		\resizebox{\columnwidth}{!}{%
+		\begin{tabular}{lccccc}
+			\toprule
+			Metric & Methods & Friedman $p$-value & uLEAD-TabPFN rank & Better & Worse \\
+			\midrule
+			ROC-AUC & 28 & $3.76\times10^{-75}$ & 10.84 & 0 & 11 \\
+			PR-AUC  & 29 & $1.91\times10^{-78}$ & 11.18 & 0 & 11 \\
+			\bottomrule
+		\end{tabular}}
+	\end{table}
+
+	Figure~\ref{fig:friedman_nemenyi_rankplot} shows the critical-difference rank plot for the all-dataset Friedman/Nemenyi analysis.
+
+	\begin{figure}[t]
+		\centering
+		\includegraphics[width=\columnwidth]{friedman_nemenyi_rankplot.pdf}
+		\caption{Critical-difference rank plot for the Friedman/Nemenyi analysis over all 57 datasets.
+		Lower mean rank is better.
+		Horizontal bars connect groups of methods that are \emph{not} significantly different from each other under the Nemenyi post-hoc test at $\alpha{=}0.05$.
+		Methods not connected to uLEAD-TabPFN by a bar are significantly different from it.
+		uLEAD-TabPFN is highlighted; no method ranks significantly above it.}
+		\label{fig:friedman_nemenyi_rankplot}
+	\end{figure}
+
+	\section{Detailed Case Study: Wilt Dataset}
 	\label{app:case}
-
+		
 	We present an end-to-end case study on the \textit{Wilt} dataset to illustrate how uLEAD-TabPFN operates in practice, from latent representation learning to dependency-based scoring and interpretation. Wilt is a widely used benchmark for tabular anomaly detection derived from high-resolution remote sensing imagery, where diseased trees correspond to anomalous instances. The dataset consists of five continuous spectral and texture-related features extracted from multispectral and panchromatic image bands, including mean values of the green (Mean-G), red (Mean-R), and near-infrared (Mean-NIR) bands, as well as texture statistics from the panchromatic band (GLCM-Pan) and intensity variation measured by the standard deviation of the panchromatic band (SD-Pan). With a total of 4,819 samples (4,562 normal and 257 anomalous), its low dimensionality and well-defined physical feature semantics make Wilt particularly suitable for a detailed methodological analysis and interpretability study.
-
-	On the Wilt dataset, uLEAD-TabPFN achieves a ROC-AUC of 97.5\% and a PR-AUC of 90.8\%, substantially outperforming existing baseline methods, which typically achieve ROC-AUC values around 60\% and PR-AUC values near 20\%. Relative to the average baseline performance, this corresponds to improvements of 81\% in ROC-AUC and 534\% in PR-AUC.
-
-	The goal of this case study is to understand why uLEAD-TabPFN performs particularly well on this dataset. To this end, we compare uLEAD-TabPFN with the ablated variants introduced in the ablation study of the main paper. Specifically, uLEAD-Original, which operates directly on the original feature space without latent transformation, achieves 84\% ROC-AUC and 43\% PR-AUC. Replacing TabPFN with a CART-based dependency estimator (uLEAD-CART) obtains 86\% ROC-AUC and 51\% PR-AUC. LEAD-TabPFN without uncertainty-aware scoring attains the same ROC-AUC (97.5\%) and PR-AUC (90.8\%) as the full model.
-
+	
+	On the Wilt dataset, uLEAD-TabPFN achieves a ROC-AUC of 97.5\% and a PR-AUC of 84.6\%, substantially outperforming existing baseline methods, which typically achieve ROC-AUC values around 60\% and PR-AUC values near 20\%. Relative to the average baseline performance, this corresponds to improvements of 81\% in ROC-AUC and 491\% in PR-AUC.
+	
+	The goal of this case study is to understand why uLEAD-TabPFN performs particularly well on this dataset. To this end, we compare uLEAD-TabPFN with the ablated variants introduced in the ablation study of the main paper. Specifically, uLEAD-Original, which operates directly on the original feature space without latent transformation, achieves 85\% ROC-AUC and 47\% PR-AUC. Replacing TabPFN with a CART-based dependency estimator (uLEAD-CART) obtains 92\% ROC-AUC and 64\% PR-AUC. uLEAD-TabPFN without uncertainty-aware scoring attains similar ROC-AUC (97.4\%) and PR-AUC (86.9\%) to the full model.
+	
 	These results indicate that the dominant performance gains on the Wilt dataset stem from the representation learning and dependency modeling enabled by TabPFN, while uncertainty-aware scoring plays a less critical role in this particular setting. Consequently, the following analysis focuses on understanding how the latent space transformation contributes to improved anomaly detection performance.
-
+	
 	\paragraph{Latent Space Analysis.}
+	We first compare feature dependencies in the original and latent spaces using the Pearson correlation coefficient and the conditional coefficient of determination ($R^2$) estimated with TabPFN. Pearson correlation measures pairwise linear dependence, while conditional $R^2$ quantifies how well each feature can be predicted from the remaining features.
+
+	In the original feature space, the mean absolute Pearson correlation is 0.239, indicating weak pairwise dependencies. After projection into the latent space, this value increases to 0.531 (a 122.4\% relative increase), with the standard deviation rising from 0.317 to 0.581, indicating amplified and more diverse dependency strengths. Consistent with this, the average conditional $R^2$ increases from 0.649 (std. 0.285) in the original space to 0.991 (std. 0.003) in the latent space, showing that the learned representation makes conditional relationships substantially more predictable and stable.
+
+	To examine how normal and anomalous samples are distributed in the original and latent spaces, we compare the two representations using multiple dimensionality reduction techniques, including PCA, t-SNE, and UMAP as shown in Figure~\ref{fig:top_anomalies}.
+
+	\begin{figure*}
+		\centering
+		\includegraphics[width=0.9\linewidth]{top_anomalies}
+		\caption{Visualization of top-5 and bottom-5 anomalies by anomaly score in both the original and latent feature spaces of the Wilt dataset. Each panel shows PCA, t-SNE, and UMAP projections; normal samples are shown in gray, high-scoring anomalies in red, and low-scoring anomalies in blue.}
+		\label{fig:top_anomalies}
+	\end{figure*}
+
+	Table~\ref{tab:latent_distance_analysis} reports complementary quantitative metrics characterizing geometric separation, density contrast, and neighborhood structure in both spaces. The silhouette score measures the degree of separation between normal and anomalous samples based on relative intra- and inter-class distances, with values near zero indicating substantial overlap. The distance to the nearest normal sample and the Local Outlier Factor (LOF) ratio capture marginal distance- and density-based distinguishability, while nearest-neighbor anomaly rates and $k$-NN purity quantify local neighborhood coherence among anomalous samples.
+
 	\begin{table}[htbp]
 		\centering
 		\caption{Comparison of geometric and neighborhood properties in the original and latent spaces on the Wilt dataset.}
 		\label{tab:latent_distance_analysis}
-		%\small
 		\resizebox{\columnwidth}{!}{%
 			\begin{tabular}{p{3cm}ccp{5cm}}
 				\toprule
@@ -439,7 +519,7 @@
 
 				Average distance to nearest normal sample
 				& $0.3316$ & $0.3387$
-				& The separation between normal and anomalous samples remain similar across spaces. \\
+				& The separation between normal and anomalous samples remains similar across spaces. \\
 
 				LOF ratio (anomaly / normal)
 				& $1.0383$ & $1.0297$
@@ -456,58 +536,43 @@
 			\end{tabular}
 		}
 	\end{table}
-	We first compare feature dependencies in the original and latent spaces using the Pearson correlation coefficient and the conditional coefficient of determination ($R^2$) estimated with TabPFN. Pearson correlation measures pairwise linear dependence, while conditional $R^2$ quantifies how well each feature can be predicted from the remaining features.
 
-	In the original feature space, the mean absolute Pearson correlation is 0.239, indicating weak pairwise dependencies. After projection into the latent space, this value increases to 0.531 (a 122.4\% relative increase), with the standard deviation rising from 0.317 to 0.581, indicating amplified and more diverse dependency strengths. Consistent with this, the average conditional $R^2$ increases from 0.649 (std. 0.285) in the original space to 0.991 (std. 0.003) in the latent space, which shows that the learned representation makes conditional relationships substantially more predictable and stable in the latent space.
-
-	To examine how normal and anomalous samples are distributed in the original and latent spaces, we compare the two representations using multiple dimensionality reduction techniques, including PCA, t-SNE, and UMAP as shown in Figure~\ref{fig:top_anomalies}.
-
-	\begin{figure*}
-		\centering
-		\includegraphics[width=0.9\linewidth]{top_anomalies}
-		\caption{Visualization of top-5 and bottom-5 anomalies in both the original and latent feature spaces.}
-		\label{fig:top_anomalies}
-	\end{figure*}
-
-	In addition, Table~\ref{tab:latent_distance_analysis} reports complementary quantitative metrics characterizing geometric separation, density contrast, and neighborhood structure in both spaces. Specifically, the silhouette score measures the degree of separation between normal and anomalous samples based on relative intra- and inter-class distances, with values near zero indicating substantial overlap. The distance to the nearest normal sample and the Local Outlier Factor (LOF) ratio capture marginal distance- and density-based distinguishability, while nearest-neighbor anomaly rates and $k$-NN purity quantify local neighborhood coherence among anomalous samples.
+	Figure~\ref{fig:wilt_umap} shows that normal and anomalous samples remain substantially overlapping in both the original and latent spaces, consistent with the near-zero silhouette scores reported in Table~\ref{tab:latent_distance_analysis} (from $-0.140$ in the original space to $0.002$ in the latent space).
 
 	\begin{figure}[htbp]
 		\centering
 		\includegraphics[width=\columnwidth]{umap.png}
 		\caption{
-			UMAP visualization of the Wilt dataset in the original feature space (left) and the learned latent space (right), comparing the data organization before and after the latent transformation.
+			UMAP visualization of the Wilt dataset in the original feature space (left) and the learned latent space (right). Normal samples are shown in gray and anomalous samples in color. Despite the latent transformation, normal and anomalous samples remain substantially overlapping; anomalous samples nevertheless form more locally coherent neighborhoods in the latent space.
 		}
 		\label{fig:wilt_umap}
-	\end{figure}
-
-	Figure~\ref{fig:wilt_umap} shows that normal and anomalous samples remain substantially overlapping in both the original and latent spaces, consistent with the near-zero silhouette scores reported in Table~\ref{tab:latent_distance_analysis} (from $-0.140$ in the original space to $0.002$ in the latent space). Likewise, the average distance from anomalous samples to their nearest normal neighbors changes only marginally, from $0.332$ to $0.339$, and density-based contrast remains weak, with the LOF ratio slightly decreasing from $1.038$ to $1.030$. Together, these results indicate that the improved detection performance of uLEAD-TabPFN is not driven by global geometric separation or marginal distance- and density-based cues.
-
+	\end{figure} Likewise, the average distance from anomalous samples to their nearest normal neighbors changes only marginally, from $0.332$ to $0.339$, and density-based contrast remains weak, with the LOF ratio slightly decreasing from $1.038$ to $1.030$. Together, these results indicate that the improved detection performance of uLEAD-TabPFN is not driven by global geometric separation or marginal distance- and density-based cues.
+	
 	In contrast, both the visualization and neighborhood-level metrics reveal a clear structural change in the latent space. As reported in Table~\ref{tab:latent_distance_analysis}, the proportion of anomalies whose nearest neighbor is also anomalous increases from $57\%$ to $71\%$, and the fraction of anomalies among the 30 nearest neighbors rises from $0.29$ to $0.39$, indicating stronger local neighborhood coherence among anomalous samples. In addition, the average silhouette score computed over anomalous samples remains positive in both spaces ($0.331$ in the original space and $0.275$ in the latent space), whereas the corresponding scores for normal samples are negative ($-0.167$ and $-0.013$). Together, these results indicate that anomalous samples exhibit more coherent local neighborhood structure than normal samples in both representations, with stronger neighborhood-level coherence in the latent space despite slightly reduced global compactness.
-
+	
 	These results indicate that in the original feature space, anomalies tend to form a single broad cluster that substantially overlaps with normal samples, which limits the effectiveness of distance-, density-, and marginal-distribution-based baseline methods. In contrast, Figure~\ref{fig:wilt_umap} illustrates that anomalous samples in the latent space are organized into multiple locally coherent neighborhoods rather than a single globally compact cluster. Although anomalies are not more geometrically separated from normal samples, the latent representation restructures anomalous instances according to shared dependency violations. This organization aligns naturally with the dependency-based scoring of uLEAD-TabPFN, where anomaly detection is driven by conditional inconsistency rather than marginal distance or density.
-
-
+	
+	
 	\paragraph{Anomaly Interpretation.}
 	uLEAD-TabPFN provides interpretability by design through its explicit dependency-based anomaly scoring mechanism. For a given test sample, the anomaly score is computed as an aggregation of normalized conditional dependency deviations across latent dimensions. Latent dimensions with large contributions correspond to conditional relationships that are unlikely under the learned normal data distribution, making the source of abnormality directly observable at the representation level.
-
+	
 	Crucially, the latent representation is obtained via a linear transformation of the original feature space. As a result, dependency deviations detected in the latent space can be directly traced back to the original input features through the encoder weights, enabling faithful feature-level attribution without relying on post-hoc explanation techniques. This interpretability reflects conditional inconsistency rather than marginal outliers: a feature may appear anomalous not because of its absolute value, but because it violates learned dependencies given the remaining features. This aligns the explanation with the underlying detection mechanism of uLEAD-TabPFN.
-
+	
 	We analyze a representative top-ranked anomaly from the Wilt dataset to illustrate instance-level interpretability. For this sample, the anomaly score is primarily driven by four out of five latent dimensions. Specifically, latent dimensions $Z_0$, $Z_1$, $Z_2$, and $Z_4$ contribute $41.5$, $43.8$, $39.3$, and $32.9$ to the total anomaly score, respectively, while $Z_3$ contributes only $7$.
+	Figure~\ref{fig:anomaly_attribution} shows the attribution of these latent-space dependency violations back to the original input features. Owing to the linear encoder, the contribution of each original feature to the anomaly score can be explicitly quantified. The strongest attributions correspond to features associated with vegetation condition, such as near-infrared reflectance (Mean-NIR) and panchromatic intensity variation (SD-Pan). Similar attribution patterns are consistently observed across other top-ranked Wilt anomalies.
 
-	\begin{figure}
+	\begin{figure}[htbp]
 		\centering
 		\includegraphics[width=\columnwidth]{anomaly_01_attribution.png}
-		\caption{Feature-level attribution of the anomaly score to the original input features for anomaly~\#1.}
+		\caption{Feature-level attribution of the anomaly score to the five original input features for anomaly~\#1 (highest-ranked Wilt anomaly). Bar heights reflect each feature's contribution to the total anomaly score via the linear encoder.}
 		\label{fig:anomaly_attribution}
 	\end{figure}
-
-	Figure~\ref{fig:anomaly_attribution} visualizes how these latent-space dependency violations are attributed back to the original input features. Owing to the linear encoder, the contribution of each original feature to the anomaly score can be explicitly quantified. For this anomaly, the strongest attributions correspond to features associated with vegetation condition, such as near-infrared reflectance (Mean-NIR) and panchromatic intensity variation (SD-Pan). Similar attribution patterns are consistently observed across other top-ranked anomalies, as documented in the appendix.
-
-	Overall, this case study demonstrates how uLEAD-TabPFN enables transparent, end-to-end interpretation by linking latent dependency violations, uncertainty-aware scoring, and original feature contributions within a unified framework.
+	
+	We provide detailed numerical breakdowns for the highest-ranked anomaly (Index: 2361, Score: 75.36). Table~\ref{tab:anomaly1_values} reports the raw feature values, normalized values, and attribution scores for each original feature. Table~\ref{tab:anomaly1_latent} reports the per-latent-dimension analysis, including latent values, predicted conditional means, residuals, conditional variances, negative log-likelihoods, and per-dimension score contributions.
 
 	\begin{table}[htbp]
 		\centering
-		\caption{Raw values, normalized values, and attribution scores across all original features for anomaly~\#1.}
+		\caption{Raw values, normalized values, and attribution scores for each original feature of anomaly~\#1 (highest-ranked Wilt anomaly, score: 75.36).}
 		\resizebox{1\columnwidth}{!}{
 			\begin{tabular}{lrrrrr}
 				\toprule
@@ -525,7 +590,7 @@
 
 	\begin{table}[htbp]
 		\centering
-		\caption{Per-latent-dimension analysis for anomaly~\#1: latent values, predicted conditional means, deviations, variances, negative log-likelihoods, and score contributions.}
+		\caption{Per-latent-dimension analysis for anomaly~\#1: latent values, predicted conditional means, residuals, conditional variances, negative log-likelihoods, and score contributions.}
 		\resizebox{1\columnwidth}{!}{
 			\begin{tabular}{lrrrrr}
 				\toprule
@@ -544,10 +609,7 @@
 		\label{tab:anomaly1_latent}
 	\end{table}
 
-	We analyze the interpretability of the highest-ranked anomaly (Index: 2361, Score: 75.3610).
-	Original feature values for anomaly \#1, including raw values, normalized values, and attribution scores across all features, are reported in Table~\ref{tab:anomaly1_values}.
-
-	Latent feature analysis for anomaly \#1, including latent values, predicted means, deviations, variances, negative log-likelihoods, and per-dimension contributions, is reported in Table~\ref{tab:anomaly1_latent}.
+	Overall, this case study demonstrates how uLEAD-TabPFN enables transparent, end-to-end interpretation by linking latent dependency violations, uncertainty-aware scoring, and original feature contributions within a unified framework.
 
 	\section{Latent-Dimension Sensitivity}
 	\label{app:sensitivity}
@@ -555,15 +617,13 @@
 		\centering
 		\includegraphics[width=1\columnwidth]{sensitivity.png}
 		\caption{Sensitivity of uLEAD-TabPFN to the latent dimension cap $p$ on datasets with $d \leq 100$. The blue curve (left axis) shows the average ROC-AUC and the red curve (right axis) the average PR-AUC as functions of $p$.}
-		\label{fig:latent_dim}
+		\label{fig:supp_latent_dim}
 	\end{figure}
 
 	uLEAD-TabPFN is deliberately designed with a minimal set of hyperparameters, most of which are fixed across all experiments (see the main paper for details) to avoid dataset-specific tuning.
 	We therefore focus the sensitivity analysis on the primary structural hyperparameter, the latent dimensionality $p$, restricting it to datasets with $d \leq 100$ to avoid confounding the effect of $p$ with the aggressive dimensionality reduction that would be required for datasets with $d > 100$.
-	Figure~\ref{fig:latent_dim} reports the average ROC-AUC and PR-AUC over these datasets as $p$ varies: performance improves rapidly as $p$ increases from small values and stabilizes around $p \approx 40$, with only marginal gains for larger values up to $p = 100$.
+	Figure~\ref{fig:supp_latent_dim} reports the average ROC-AUC and PR-AUC over these datasets as $p$ varies: performance improves rapidly as $p$ increases from small values and stabilizes around $p \approx 40$, with only marginal gains for larger values up to $p = 100$.
 	These results indicate that uLEAD-TabPFN does not require fine-grained tuning of the latent dimensionality and maintains stable performance across a broad range of values.
-
-
 
 	\bibliographystyle{IEEEtran}
 	\bibliography{reference}
