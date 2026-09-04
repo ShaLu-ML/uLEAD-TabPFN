@@ -35,8 +35,8 @@ Here, *uncertainty* means input-dependent conditional residual variability learn
 │   └── Classical/
 │       └── 0_synthetic_dependency.npz
 └── supplementary/
-    ├── ulead_icdm_supplementary.pdf
-    ├── ulead_icdm_supplementary.tex
+    ├── ulead_supplementary.pdf
+    ├── ulead_supplementary.tex
     ├── reference.bib
     └── figures/
 ```
@@ -175,10 +175,10 @@ The camera-ready supplementary PDF is included in `supplementary/`. To rebuild i
 
 ```bash
 cd supplementary
-pdflatex -interaction=nonstopmode -halt-on-error ulead_icdm_supplementary.tex
-bibtex ulead_icdm_supplementary
-pdflatex -interaction=nonstopmode -halt-on-error ulead_icdm_supplementary.tex
-pdflatex -interaction=nonstopmode -halt-on-error ulead_icdm_supplementary.tex
+pdflatex -interaction=nonstopmode -halt-on-error ulead_supplementary.tex
+bibtex ulead_supplementary
+pdflatex -interaction=nonstopmode -halt-on-error ulead_supplementary.tex
+pdflatex -interaction=nonstopmode -halt-on-error ulead_supplementary.tex
 ```
 
 ## Citation
