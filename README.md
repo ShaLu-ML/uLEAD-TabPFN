@@ -2,11 +2,9 @@
 
 ![ICDM 2026: Accepted](https://img.shields.io/badge/IEEE%20ICDM%202026-Accepted-2ea44f)
 
-**Uncertainty-aware Dependency-based Anomaly Detection with TabPFN**
+## Publication
 
-> **Accepted paper:** uLEAD-TabPFN has been accepted at the **2026 IEEE International Conference on Data Mining (ICDM 2026)**.
-
-Sha Lu, Jixue Liu, Stefan Peters, Thuc Duy Le, Yongzheng Xie, Lin Liu, and Jiuyong Li
+> S. Lu, J. Liu, S. Peters, T. D. Le, Y. Xie, L. Liu, and J. Li, “Uncertainty-aware Dependency-based Anomaly Detection with TabPFN,” accepted for publication in the *Proceedings of the 2026 IEEE International Conference on Data Mining (ICDM)*, 2026.
 
 uLEAD-TabPFN is an unsupervised detector for numerical tabular data. It learns a dependency-aligned linear latent representation from normal training samples, uses frozen TabPFN regressors to estimate conditional means, and fits lightweight variance networks to estimate input-dependent conditional residual scales. Test samples are ranked with a composite conditional Gaussian negative log-likelihood (NLL).
 
