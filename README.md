@@ -1,8 +1,10 @@
 # uLEAD-TabPFN
 
+![ICDM 2026: Accepted](https://img.shields.io/badge/IEEE%20ICDM%202026-Accepted-2ea44f)
+
 **Uncertainty-aware Dependency-based Anomaly Detection with TabPFN**
 
-Accepted at the **2026 IEEE International Conference on Data Mining (ICDM 2026)**.
+> **Accepted paper:** uLEAD-TabPFN has been accepted at the **2026 IEEE International Conference on Data Mining (ICDM 2026)**.
 
 Sha Lu, Jixue Liu, Stefan Peters, Thuc Duy Le, Yongzheng Xie, Lin Liu, and Jiuyong Li
 
