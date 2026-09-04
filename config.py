@@ -80,7 +80,7 @@ CONFIG = {
     # --------------------------------------------------------------------------
     # Training Dynamics
     # --------------------------------------------------------------------------
-    'ae_epochs': 20,  # Paper setting; reduce with --epochs for a quick smoke test
+    'ae_epochs': 100,  # Paper setting; reduce with --epochs for a quick smoke test
     'ae_warmup_epochs': 5,
     'ae_batch_size': 1024,
     'ae_lr_init': 5e-4,

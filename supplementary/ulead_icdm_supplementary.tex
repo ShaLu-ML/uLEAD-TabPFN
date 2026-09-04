@@ -162,7 +162,7 @@
 	
 	uLEAD-TabPFN is designed to minimize hyperparameter tuning. The TabPFN used by uLEAD-TabPFN is kept frozen, and only lightweight components, including a linear encoder and variance networks, are trained. The primary design choice is the latent dimensionality $p$: for datasets with $d \leq 100$, $p$ is set to $d$, while for $d > 100$, it is fixed to $100$. All other parameters are fixed across datasets and seeds.
 	
-	The encoder is trained for 20 epochs using Adam with no weight decay and a batch size of 1024, with the learning rate scheduled from $5\times10^{-4}$ to $10^{-6}$. 
+	The encoder is trained for 100 epochs using Adam with no weight decay and a batch size of 1024, with the learning rate scheduled from $5\times10^{-4}$ to $10^{-6}$.
 	For residual-scale normalization, one variance network is trained per latent dimension for 50 epochs using Adam with a learning rate of $10^{-3}$ and weight decay of $10^{-4}$.
 	The RCS budget is set to 500. 
 	The weights of the dependency loss $\lambda_{\mathrm{dep}}$ and the reconstruction loss $\lambda_{\mathrm{rec}}$ are set to 1 and 0.3, respectively.

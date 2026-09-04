@@ -126,7 +126,7 @@ The defaults in `config.py` match the paper configuration.
 | `test_set_exclude` | `initial_normals` | Exclude the normal training pool from evaluation |
 | `latent_dim` | `None` | Apply the paper rule $p=\min(d,100)$ |
 | `latent_dim_max_cap` | `100` | Maximum latent dimension |
-| `ae_epochs` | `20` | Encoder-training epochs |
+| `ae_epochs` | `100` | Encoder-training epochs |
 | `use_ddm` | `True` | Enable conditional Gaussian NLL scoring |
 | `ddm_train_on_context` | `False` | Fit variance networks on the initial normal pool |
 | `ddm_aggregation` | `mean` | Average per-dimension NLL contributions |
