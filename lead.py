@@ -18,7 +18,7 @@ Key Features:
 ADBench Interface:
     - __init__(seed, **kwargs): Initialize with seed for reproducibility
     - fit(X_train, y_train): Train encoder on labeled data using context set
-    - predict_score(X_test): Return anomaly scores based on dependency deviations
+    - predict_score(X_test): Return composite conditional NLL anomaly scores
 """
 
 import os
@@ -384,7 +384,7 @@ class LeadTabPFN:
 
     Pipeline:
         1. fit(): Normalize → Generate representative context set → Train encoder (dep_decoder) → Cache latent representations
-        2. predict_score(): Normalize → Encode → Compute dependency deviations → Return anomaly scores
+        2. predict_score(): Normalize → Encode → Compute conditional NLL → Return anomaly scores
 
     Performance Optimizations:
         - TabPFN model reuse: Create once per epoch/call instead of per-dimension (50-70% speedup)
@@ -565,13 +565,20 @@ class LeadTabPFN:
         Determine the latent dimension for the encoder using the adaptive strategy.
 
         If CONFIG['latent_dim'] is set to an integer, that value is used directly.
-        Otherwise the adaptive heuristic is applied:
+        Otherwise the paper setting is applied:
           - d <= latent_dim_identity_threshold  →  latent_dim = d  (no compression)
-          - d >  latent_dim_identity_threshold  →  latent_dim = min(cap, max(3, floor(min(2.5*sqrt(d), 0.5*d))))
+          - d >  latent_dim_identity_threshold  →  latent_dim = latent_dim_max_cap
         """
+        if n_features < 2:
+            raise ValueError("uLEAD-TabPFN requires at least two input features")
+
         # User-specified override
         if self.latent_dim_config is not None:
             latent_dim = self.latent_dim_config
+            if not isinstance(latent_dim, int) or not 2 <= latent_dim <= n_features:
+                raise ValueError(
+                    f"latent_dim must be an integer in [2, {n_features}], got {latent_dim}"
+                )
             if self.verbose:
                 print(f"[LeadTabPFN] Latent dimension: {latent_dim} (user-specified, original: {n_features})")
             return latent_dim
@@ -582,12 +589,95 @@ class LeadTabPFN:
             if self.verbose:
                 print(f"[LeadTabPFN] Latent dimension: {latent_dim} (identity, d={n_features} <= threshold={self.latent_dim_identity_threshold})")
         else:
-            latent_dim = int(min(2.5 * np.sqrt(n_features), 0.5 * n_features))
-            latent_dim = max(3, latent_dim)
-            latent_dim = min(self.latent_dim_max_cap, latent_dim)
+            latent_dim = min(self.latent_dim_max_cap, n_features)
             if self.verbose:
                 print(f"[LeadTabPFN] Latent dimension: {latent_dim} (compressed, d={n_features} > threshold={self.latent_dim_identity_threshold}, cap={self.latent_dim_max_cap})")
         return latent_dim
+
+    def _gen_context_set(self, X, y):
+        """Construct the normal-only Representative Context Set (RCS).
+
+        Half of the available normal samples are first assigned to the training
+        pool. If that pool exceeds ``context_cap``, K-means partitions it and a
+        near-uniform quota is selected from each cluster. Each quota combines
+        points nearest to and farthest from the centroid to cover central and
+        dispersed regions while respecting the global budget.
+        """
+        X = np.asarray(X)
+        y = np.asarray(y).reshape(-1)
+        if X.ndim != 2 or len(X) != len(y):
+            raise ValueError("X must be two-dimensional and aligned with y")
+
+        normal_indices = np.flatnonzero(y == 0)
+        if len(normal_indices) == 0:
+            raise ValueError("uLEAD-TabPFN requires at least one normal sample")
+
+        n_initial = max(1, int(len(normal_indices) * self.context_fraction))
+        rng = np.random.default_rng(self.seed)
+        initial_indices = rng.choice(normal_indices, size=n_initial, replace=False)
+
+        budget = min(self.context_cap, n_initial)
+        if n_initial <= budget:
+            context_indices = initial_indices.copy()
+        elif self.context_clustering_n_clusters is None:
+            context_indices = rng.choice(initial_indices, size=budget, replace=False)
+        else:
+            X_initial = X[initial_indices]
+            n_clusters = min(self.context_clustering_n_clusters, budget, n_initial)
+            if n_clusters < 2:
+                context_indices = rng.choice(initial_indices, size=budget, replace=False)
+            else:
+                kmeans = KMeans(
+                    n_clusters=n_clusters,
+                    random_state=self.seed,
+                    n_init=10,
+                    max_iter=300,
+                )
+                labels = kmeans.fit_predict(X_initial)
+                base_quota, remainder = divmod(budget, n_clusters)
+                selected = []
+
+                for cluster_id in range(n_clusters):
+                    local_positions = np.flatnonzero(labels == cluster_id)
+                    quota = min(
+                        len(local_positions),
+                        base_quota + (1 if cluster_id < remainder else 0),
+                    )
+                    if quota == 0:
+                        continue
+
+                    distances = np.linalg.norm(
+                        X_initial[local_positions] - kmeans.cluster_centers_[cluster_id],
+                        axis=1,
+                    )
+                    ordered = local_positions[np.argsort(distances)]
+                    n_near = (quota + 1) // 2
+                    n_far = quota - n_near
+                    chosen = ordered[:n_near]
+                    if n_far:
+                        chosen = np.concatenate((chosen, ordered[-n_far:]))
+                    selected.extend(initial_indices[chosen].tolist())
+
+                # Small clusters may leave part of the uniform quota unused.
+                # Fill the remainder deterministically from the unselected pool.
+                selected = list(dict.fromkeys(selected))
+                if len(selected) < budget:
+                    remaining = np.setdiff1d(
+                        initial_indices,
+                        np.asarray(selected, dtype=int),
+                        assume_unique=False,
+                    )
+                    fill = rng.choice(remaining, size=budget - len(selected), replace=False)
+                    selected.extend(fill.tolist())
+                context_indices = np.asarray(selected[:budget], dtype=int)
+
+        context_purity = float(np.mean(y[context_indices] == 0))
+        if self.verbose:
+            print(
+                f"[LeadTabPFN] RCS: {len(context_indices)} samples selected "
+                f"from {n_initial} normal training samples"
+            )
+        return context_indices, context_purity, initial_indices
 
     def _train_autoencoder(self, X_context):
         """
@@ -646,12 +736,16 @@ class LeadTabPFN:
             if self.verbose:
                 print(f"  [Fixed Lambda] lambda_rec={lambda_rec_eff}")
 
+        # Keep at least one full-training epoch when a shortened smoke test is
+        # requested with fewer epochs than the paper configuration.
+        warmup_epochs = min(self.ae_warmup_epochs, max(self.ae_epochs - 1, 0))
+
         # Training phases
-        if self.ae_warmup_epochs > 0:
+        if warmup_epochs > 0:
             if self.verbose:
                 print(f"  [Training Strategy] Two-phase training:")
-                print(f"    Phase 1 (Warmup): Epochs 1-{self.ae_warmup_epochs} - Reconstruction only")
-                print(f"    Phase 2 (Full): Epochs {self.ae_warmup_epochs+1}-{self.ae_epochs} - All losses")
+                print(f"    Phase 1 (Warmup): Epochs 1-{warmup_epochs} - Reconstruction only")
+                print(f"    Phase 2 (Full): Epochs {warmup_epochs+1}-{self.ae_epochs} - All losses")
         else:
             if self.verbose:
                 print(f"  [Training Strategy] Single-phase training with all losses from start")
@@ -676,7 +770,7 @@ class LeadTabPFN:
             epoch_recon = 0.0
 
             # Check if in warmup phase
-            is_warmup = (epoch < self.ae_warmup_epochs)
+            is_warmup = (epoch < warmup_epochs)
             tabpfn_models = None
 
             # Create TabPFN model once per epoch (reuse across all batches and dimensions)
@@ -756,7 +850,7 @@ class LeadTabPFN:
 
 
                     # Dynamic reconstruction loss scaling (at start of full training)
-                    if lambda_rec_eff is None and epoch == self.ae_warmup_epochs and batch_idx == 0:
+                    if lambda_rec_eff is None and epoch == warmup_epochs and batch_idx == 0:
                         dep_raw = dep_loss.item()
                         recon_raw = loss_recon.item()
                         eps = 1e-8
@@ -777,8 +871,8 @@ class LeadTabPFN:
                     if self.ae_use_cosine_ramp and not is_warmup:
                         # lambda_rec(epoch) = lambda_max * 0.5 * (1 + cos(pi * progress))
                         # where progress goes from 0 to 1 over epochs after warmup
-                        epochs_after_warmup = epoch - self.ae_warmup_epochs
-                        total_post_warmup = max(self.ae_epochs - self.ae_warmup_epochs - 1, 1)
+                        epochs_after_warmup = epoch - warmup_epochs
+                        total_post_warmup = max(self.ae_epochs - warmup_epochs - 1, 1)
                         progress = epochs_after_warmup / total_post_warmup
                         lambda_rec_used = lambda_rec_base * 0.5 * (1 + np.cos(np.pi * progress))
                     else:
@@ -848,8 +942,8 @@ class LeadTabPFN:
             # Compute lambda_rec_used for logging (same logic as in the batch loop)
             lambda_rec_base_log = lambda_rec_eff if lambda_rec_eff is not None else self.ae_lambda_rec_base
             if self.ae_use_cosine_ramp and not is_warmup:
-                epochs_after_warmup = epoch - self.ae_warmup_epochs
-                total_post_warmup = max(self.ae_epochs - self.ae_warmup_epochs - 1, 1)
+                epochs_after_warmup = epoch - warmup_epochs
+                total_post_warmup = max(self.ae_epochs - warmup_epochs - 1, 1)
                 progress = epochs_after_warmup / total_post_warmup
                 lambda_rec_log = lambda_rec_base_log * 0.5 * (1 + np.cos(np.pi * progress))
             else:
@@ -1781,29 +1875,39 @@ class LeadTabPFN:
 
     def compute_scores_from_cached_artifacts(self, dep_deviations=None):
         """
-        Compute final anomaly scores from cached dependency deviations.
+        Compute final anomaly scores from a cached per-dimension score matrix.
 
         This allows recomputing scores without re-running expensive TabPFN inference.
 
         Args:
-            dep_deviations (ndarray, optional): Cached dependency deviation matrix (n_test, latent_dim)
+            dep_deviations (ndarray, optional): Cached NLL matrix when DDM is enabled,
+                otherwise a dependency-deviation matrix (n_test, latent_dim)
 
         Returns:
             ndarray: Final anomaly scores (n_test,)
 
         Raises:
-            ValueError: If dependency deviations are missing
+            ValueError: If the cached matrix is missing
         """
-        # Use dependency deviation only
         if dep_deviations is None:
-            raise ValueError("Dependency deviations required for dependency scoring")
+            raise ValueError("A cached per-dimension score matrix is required")
 
-        # Compute dependency scores using cached deviations
-        scores_dep = self.compute_anomaly_scores(
+        dep_deviations = np.asarray(dep_deviations)
+        if dep_deviations.ndim != 2:
+            raise ValueError(
+                f"Cached score matrix must be two-dimensional, got shape {dep_deviations.shape}"
+            )
+
+        if CONFIG['use_ddm']:
+            return self._aggregate_ddm_scores(
+                dep_deviations,
+                aggregation=CONFIG['ddm_aggregation'],
+            )
+
+        return self.compute_anomaly_scores(
             dev_abs=dep_deviations,
             dev_abs_context=self._context_deviation_cache
         )
-        return scores_dep
 
 
 # ============================================================================

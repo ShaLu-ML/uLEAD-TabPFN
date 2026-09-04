@@ -1,82 +1,97 @@
-# uLEAD-TabPFN: Uncertainty-aware Dependency-based Anomaly Detection with TabPFN
+# uLEAD-TabPFN
 
-## Main Idea
+**Uncertainty-aware Dependency-based Anomaly Detection with TabPFN**
 
-uLEAD-TabPFN is an unsupervised tabular anomaly detector. It first selects a representative context set from normal samples, learns a linear latent representation, and then uses TabPFN regressors to model dependencies among latent dimensions. A test sample receives a high anomaly score when its latent dimensions violate the conditional dependencies learned from normal data. The final method also uses uncertainty-aware distributional dependency modeling, where variance networks convert point prediction deviations into Gaussian negative log-likelihood scores.
+Accepted at the **2026 IEEE International Conference on Data Mining (ICDM 2026)**.
 
-The implementation follows the paper pipeline:
+Sha Lu, Jixue Liu, Stefan Peters, Thuc Duy Le, Yongzheng Xie, Lin Liu, and Jiuyong Li
 
-1. Build a representative context set from normal training samples.
-2. Train a linear encoder with a dependency loss computed from frozen TabPFN regressors.
-3. Fit uncertainty-aware variance networks on normal data.
-4. Score test samples by aggregating latent dependency violations.
+uLEAD-TabPFN is an unsupervised detector for numerical tabular data. It learns a dependency-aligned linear latent representation from normal training samples, uses frozen TabPFN regressors to estimate conditional means, and fits lightweight variance networks to estimate input-dependent conditional residual scales. Test samples are ranked with a composite conditional Gaussian negative log-likelihood (NLL).
 
-## Repository Contents
+## Method overview
+
+The implementation follows four stages:
+
+1. Construct a Representative Context Set (RCS) from normal training samples.
+2. Train a linear encoder so that each latent dimension is predictable from the others.
+3. Fit a residual-scale network for each latent conditional model while keeping the encoder and TabPFN regressors frozen.
+4. Average the per-dimension conditional Gaussian NLL contributions to obtain the anomaly score.
+
+Here, *uncertainty* means input-dependent conditional residual variability learned from normal data. It is aleatoric residual-scale uncertainty, not TabPFN epistemic uncertainty or a calibrated predictive distribution.
+
+## Repository structure
 
 ```text
 .
-|-- README.md
-|-- requirements.txt
-|-- config.py
-|-- lead.py
-|-- run.py
-|-- datasets_example.json
-|-- datasets_adbench.json
-|-- datasets_files_name.json
-|-- data/
-|   `-- Classical/
-|       `-- 0_synthetic_dependency.npz
-`-- supplementary/
-    |-- ulead_icdm_supplementary.pdf
-    |-- ulead_icdm_supplementary.tex
-    |-- reference.bib
-    `-- figures/
+├── README.md
+├── CITATION.cff
+├── requirements.txt
+├── config.py
+├── lead.py
+├── run.py
+├── datasets_example.json
+├── datasets_adbench.json
+├── data/
+│   └── Classical/
+│       └── 0_synthetic_dependency.npz
+└── supplementary/
+    ├── ulead_icdm_supplementary.pdf
+    ├── ulead_icdm_supplementary.tex
+    ├── reference.bib
+    └── figures/
 ```
 
-`lead.py` contains the model. `run.py` contains the ADBench-style evaluation loop, caching, metrics, and result logging. `config.py` stores the default method settings used by the paper implementation. The bundled dataset is a small synthetic ADBench-format example so the repository can be downloaded and run directly.
+- `lead.py` implements the detector.
+- `run.py` provides the ADBench-style evaluation, metrics, caching, and result logging.
+- `config.py` contains the paper settings.
+- `data/` contains a small synthetic example in ADBench `.npz` format.
+- `supplementary/` contains the camera-ready supplementary material and its source.
 
 ## Installation
 
-Python 3.10 or newer is recommended. A CUDA GPU is strongly recommended for full experiments because TabPFN can be slow on CPU.
+Python 3.10 or newer is recommended. A CUDA-capable GPU is strongly recommended for full experiments; the smoke test can run on CPU.
 
 ```bash
+git clone https://github.com/ShaLu-ML/uLEAD-TabPFN.git
+cd uLEAD-TabPFN
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-If `tabpfn` installation differs on your platform, install it following the official TabPFN package instructions, then rerun the commands below.
+The first TabPFN run may download model assets. If installation differs on your platform, follow the [official TabPFN instructions](https://github.com/PriorLabs/TabPFN).
 
-## Quick Smoke Test
+## Quick start
 
-The repository is self-contained for a direct smoke test. The default dataset catalog points to the bundled synthetic example in `data/Classical/`.
+Run the bundled synthetic example with a short CPU smoke test:
 
 ```bash
 python run.py --epochs 2 --seeds 0 --no-ddm --device cpu --from-scratch
 ```
 
-This quick command is only a functionality check. It reduces the number of encoder epochs and disables uncertainty-aware DDM to keep runtime short on CPU. Results are written to `results/results.csv`, and cached artifacts are written under `results/lead/`.
+This command checks the data-loading, context-construction, encoder, scoring, and result-writing pipeline. It disables the residual-scale networks and reduces encoder training to two epochs for speed; it is not the full paper configuration.
 
-For a closer run of the paper method on the bundled example, use:
+Run the complete uLEAD-TabPFN method on the example with:
 
 ```bash
 python run.py --seeds 0 --from-scratch
 ```
 
-This keeps the default paper settings in `config.py`, including context budget 500, encoder training with 100 epochs, and DDM enabled.
+By default, results are written to `results/results.csv`, and intermediate artifacts are cached under `results/lead/`.
 
-## Reproducing Paper-Scale Experiments
+## Reproducing the paper protocol
 
-The paper-scale evaluation uses the ADBench dataset layout with category directories such as:
+Download the [ADBench datasets](https://github.com/Minqi824/ADBench) and retain their category directories, for example:
 
 ```text
 ADBench/
-|-- Classical/
-|-- CV_by_ResNet18/
-`-- NLP_by_BERT/
+├── Classical/
+├── CV_by_ResNet18/
+└── NLP_by_BERT/
 ```
 
-To run the full catalog used for the paper:
+Then run the complete catalog:
 
 ```bash
 export ADBENCH_DATA_PATH=/path/to/ADBench
@@ -87,7 +102,7 @@ python run.py \
   --from-scratch
 ```
 
-To run one classical ADBench dataset by numeric ID:
+To run one classical dataset by its numeric filename prefix:
 
 ```bash
 python run.py \
@@ -97,62 +112,66 @@ python run.py \
   --seeds 0
 ```
 
-The main paper reports averages over the evaluation protocol described in the manuscript. The bundled synthetic dataset is not part of the benchmark table; it is included only to make the anonymous repository runnable without downloading external data.
+All preprocessing statistics, RCS prototypes, encoder parameters, and variance-network parameters are computed exclusively from the normal training split. Test samples and labels are used only for evaluation. The bundled synthetic dataset is a functionality example and is not included in the paper's benchmark tables.
 
-## Important Configuration
+## Important settings
 
-The main paper settings are in `config.py`:
+The defaults in `config.py` match the paper configuration.
 
-| Setting | Default | Meaning |
+| Setting | Default | Description |
 |---|---:|---|
-| `context_fraction` | `0.5` | Initial fraction of normal samples used before downsampling |
-| `context_cap` | `500` | Representative context set budget |
-| `context_clustering_n_clusters` | `100` | KMeans clusters used for representative context selection |
-| `test_set_exclude` | `initial_normals` | Exclude the initial normal training pool from test evaluation |
-| `latent_dim` | `None` | Adaptive latent dimension |
-| `latent_dim_max_cap` | `100` | Maximum latent dimension after compression |
-| `ae_epochs` | `100` | Encoder training epochs |
-| `use_ddm` | `True` | Enable uncertainty-aware distributional dependency modeling |
-| `ddm_train_on_context` | `False` | Train variance networks on the initial normal pool |
+| `context_fraction` | `0.5` | Fraction of normal samples in the initial training pool |
+| `context_cap` | `500` | Maximum RCS size |
+| `context_clustering_n_clusters` | `100` | Clusters used for representative context selection |
+| `test_set_exclude` | `initial_normals` | Exclude the normal training pool from evaluation |
+| `latent_dim` | `None` | Apply the paper rule $p=\min(d,100)$ |
+| `latent_dim_max_cap` | `100` | Maximum latent dimension |
+| `ae_epochs` | `20` | Encoder-training epochs |
+| `use_ddm` | `True` | Enable conditional Gaussian NLL scoring |
+| `ddm_train_on_context` | `False` | Fit variance networks on the initial normal pool |
+| `ddm_aggregation` | `mean` | Average per-dimension NLL contributions |
 
-Command-line flags override the config values for a run. Useful flags include:
+Use `python run.py --help` to see the supported command-line overrides.
 
-```bash
-python run.py --help
-```
+## Data format
 
-## Data Format
+Each dataset is an `.npz` file containing:
 
-Each dataset is an `.npz` file with:
-
-- `X`: numeric feature matrix with shape `(n_samples, n_features)`.
+- `X`: numeric feature matrix with shape `(n_samples, n_features)`;
 - `y`: binary labels with `0` for normal and `1` for anomaly.
 
-The evaluation code uses `y` only to simulate the semi-supervised ADBench protocol: normal samples are used to construct the context/training set, and anomalies are held out for testing.
+At least two input features and one normal training sample are required. Categorical or multimodal fields must first be converted to numerical features.
 
-## Outputs
-
-By default, outputs are written under:
+## Outputs and caching
 
 ```text
 results/
-|-- results.csv
-`-- lead/
-    |-- config.json
-    |-- scripts/
-    |-- context_set/
-    |-- context_initial/
-    |-- context_dev/
-    `-- ddm_nll/ or dep_dev/
+├── results.csv
+└── lead/
+    ├── config.json
+    ├── scripts/
+    ├── context_set/
+    ├── context_initial/
+    ├── context_dev/
+    ├── ddm_nll/
+    └── dep_dev/
 ```
 
-`results/results.csv` records ROC-AUC, average precision, PR-AUC, F1 at the anomaly percentage threshold, training time, prediction time, context size, and key configuration fields.
+`results.csv` records ROC-AUC, average precision, PR-AUC, F1 at the anomaly-percentage threshold, timing, split sizes, and configuration values. Cached DDM matrices are aggregated directly as conditional NLL contributions; non-DDM dependency deviations are normalized against their cached context deviations.
 
-## Supplementary Material
+## Checks
 
-The `supplementary/` directory contains the supplementary PDF, LaTeX source, bibliography file, and all figures required to rebuild the supplementary document.
+Run the deterministic core checks without downloading model assets:
 
-To rebuild the supplementary PDF from this repository:
+```bash
+python -m unittest discover -s tests
+```
+
+For an end-to-end check, run the CPU smoke-test command from the Quick start section.
+
+## Supplementary material
+
+The camera-ready supplementary PDF is included in `supplementary/`. To rebuild it:
 
 ```bash
 cd supplementary
@@ -162,7 +181,18 @@ pdflatex -interaction=nonstopmode -halt-on-error ulead_icdm_supplementary.tex
 pdflatex -interaction=nonstopmode -halt-on-error ulead_icdm_supplementary.tex
 ```
 
-## Notes
+## Citation
 
-- Full benchmark reproduction requires downloading the external ADBench datasets.
-- The first TabPFN run may download or initialize model assets depending on the local TabPFN installation.
+If you use this repository, please cite the ICDM 2026 paper:
+
+```bibtex
+@inproceedings{lu2026ulead,
+  title     = {Uncertainty-aware Dependency-based Anomaly Detection with TabPFN},
+  author    = {Lu, Sha and Liu, Jixue and Peters, Stefan and Le, Thuc Duy and
+               Xie, Yongzheng and Liu, Lin and Li, Jiuyong},
+  booktitle = {2026 IEEE International Conference on Data Mining (ICDM)},
+  year      = {2026}
+}
+```
+
+The repository also provides GitHub-compatible citation metadata in `CITATION.cff`.

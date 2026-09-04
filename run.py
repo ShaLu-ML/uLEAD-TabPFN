@@ -42,6 +42,7 @@ from pathlib import WindowsPath, PosixPath
 import json
 import shutil
 import torch
+import platform
 from sklearn.cluster import KMeans
 
 
@@ -756,7 +757,12 @@ def main():
                     dataset_id = f"{dataset_name}_seed{seed}"
 
                     # Construct mode string for CSV checking
-                    mode = f'{Path(SAVE_PATH).stem}_{CONFIG["scoring_method"]}'
+                    if CONFIG['use_ddm']:
+                        training_source = 'context' if CONFIG['ddm_train_on_context'] else 'initial'
+                        score_variant = f"ddm_{CONFIG['ddm_aggregation']}_{training_source}"
+                    else:
+                        score_variant = 'dependency_deviation'
+                    mode = f'{Path(SAVE_PATH).stem}_{CONFIG["scoring_method"]}_{score_variant}'
 
                     # Check if results already exist in CSV
                     if not CONFIG['from_scratch'] and SAVE_RESULTS:
@@ -817,11 +823,13 @@ def main():
                     # Tier 1: Check if primary artifact (dep_dev) exists
                     primary_artifact_exists = dep_dev_path.exists()
 
-                    # Tier 2: Check if all required artifacts exist
-                    all_artifacts_exist = dep_dev_path.exists() and context_dev_path.exists()
+                    # DDM caches contain complete per-dimension NLL values. The
+                    # non-DDM scorer additionally requires context deviations.
+                    all_artifacts_exist = primary_artifact_exists and (
+                        CONFIG['use_ddm'] or context_dev_path.exists()
+                    )
 
-                    # Initialize control variables
-                    compute_missing = False
+                    cache_ready = False
 
                     # Branch 1: All artifacts exist - full cache load
                     if not FROM_SCRATCH and all_artifacts_exist:
@@ -846,6 +854,10 @@ def main():
 
                         X = None  # Not needed for cached scoring
                         model = LeadTabPFN(seed=seed)
+                        model.context_indices = context_indices
+                        model.initial_context_indices = initial_indices
+                        model.context_purity = 1.0 if len(context_indices) else None
+                        model.latent_dim = dep_deviations.shape[1]
                         model._context_deviation_cache = context_deviations
 
                         # Ensure size consistency
@@ -855,7 +867,6 @@ def main():
 
                         if len(scores) != len(y):
                             print(f"  ✗ Cached artifact size mismatch → invalid cache")
-                            artifacts_exist = False
                         else:
                             # Scores already correspond 1:1 to y
                             test_indices = None
@@ -863,6 +874,7 @@ def main():
                             t_pred = 0.0
                             t_load = 0.0
                             t_save = 0.0
+                            cache_ready = True
                             print("  ✓ Cached artifacts loaded successfully")
 
                     # Branch 2: Only primary artifact (dep_dev) exists - compute missing
@@ -908,6 +920,10 @@ def main():
                         # Create minimal model for scoring
                         X = None  # Not needed for cached scoring
                         model = LeadTabPFN(seed=seed)
+                        model.context_indices = context_indices
+                        model.initial_context_indices = initial_indices
+                        model.context_purity = 1.0 if len(context_indices) else None
+                        model.latent_dim = dep_deviations.shape[1]
                         model._context_deviation_cache = context_deviations
 
                         # Compute scores from cached artifacts
@@ -925,12 +941,12 @@ def main():
                             t_pred = 0.0
                             t_load = 0.0
                             t_save = 0.0
-                            compute_missing = True
+                            cache_ready = True
                             print("  ✓ Missing artifacts computed successfully")
 
 
                     # Branch 3: Train from scratch (dep_dev missing or FROM_SCRATCH or size mismatch)
-                    if FROM_SCRATCH or (not all_artifacts_exist and not primary_artifact_exists) or (not compute_missing and not all_artifacts_exist):
+                    if FROM_SCRATCH or not cache_ready:
                         print(f"\n[{dataset_idx}/{total_datasets}] {category}/{dataset_file} (seed={seed})")
                         if FROM_SCRATCH:
                             print(f"  Training from scratch (forced)...")
@@ -1026,7 +1042,7 @@ def main():
                         # Mode already constructed earlier in the loop (line 320-323)
                         data = {
                             # Metadata
-                            'hostname': 'anonymous',
+                            'hostname': platform.node() or 'unknown',
                             'category': category,
                             'dataset': extract_dataset_name(dataset_file, category),
                             'file_name': dataset_file,

@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use uLEAD-TabPFN, please cite the ICDM 2026 paper."
+title: "uLEAD-TabPFN"
+type: software
+authors:
+  - family-names: Lu
+    given-names: Sha
+  - family-names: Liu
+    given-names: Jixue
+  - family-names: Peters
+    given-names: Stefan
+  - family-names: Le
+    given-names: Thuc Duy
+  - family-names: Xie
+    given-names: Yongzheng
+  - family-names: Liu
+    given-names: Lin
+  - family-names: Li
+    given-names: Jiuyong
+repository-code: "https://github.com/ShaLu-ML/uLEAD-TabPFN"
+preferred-citation:
+  type: conference-paper
+  title: "Uncertainty-aware Dependency-based Anomaly Detection with TabPFN"
+  authors:
+    - family-names: Lu
+      given-names: Sha
+    - family-names: Liu
+      given-names: Jixue
+    - family-names: Peters
+      given-names: Stefan
+    - family-names: Le
+      given-names: Thuc Duy
+    - family-names: Xie
+      given-names: Yongzheng
+    - family-names: Liu
+      given-names: Lin
+    - family-names: Li
+      given-names: Jiuyong
+  collection-title: "2026 IEEE International Conference on Data Mining (ICDM)"
+  year: 2026

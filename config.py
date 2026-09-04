@@ -34,7 +34,7 @@ CONFIG = {
     'n_iter': None,  # Limit iterations (None = 5 for Classical datasets, 1 for others)
     
     'save_results': True,
-    'from_scratch': True, # If True, ignore cached artifacts/models and retrain
+    'from_scratch': False,  # If True, ignore cached artifacts/models and retrain
 
     'dataset_group_id': None, # None = all datasets, int = specific dataset group ID
     'test_n_features': None, # None = all features, list = specific range of features
@@ -72,17 +72,15 @@ CONFIG = {
     # --------------------------------------------------------------------------
     # Latent Dimensionality
     # --------------------------------------------------------------------------
-    # Adaptive strategy:
-    #   d <= latent_dim_identity_threshold  →  latent_dim = d  (identity, no compression)
-    #   d >  latent_dim_identity_threshold  →  latent_dim = min(cap, max(3, floor(min(2.5*sqrt(d), 0.5*d))))
-    'latent_dim': None,  # None = adaptive (recommended); set to an int to override
-    'latent_dim_identity_threshold': None,  # Feature count below which no compression is applied
-    'latent_dim_max_cap': 100,  # Upper bound on compressed latent dimension
+    # Paper setting: p = d for d <= 100 and p = 100 for d > 100.
+    'latent_dim': None,  # None = use the paper rule; set to an int to override
+    'latent_dim_identity_threshold': 100,
+    'latent_dim_max_cap': 100,
 
     # --------------------------------------------------------------------------
     # Training Dynamics
     # --------------------------------------------------------------------------
-    'ae_epochs': 100,  # Paper setting; reduce with --epochs for a quick smoke test
+    'ae_epochs': 20,  # Paper setting; reduce with --epochs for a quick smoke test
     'ae_warmup_epochs': 5,
     'ae_batch_size': 1024,
     'ae_lr_init': 5e-4,

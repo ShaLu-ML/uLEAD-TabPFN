@@ -1,8 +1,7 @@
 
-%% Supplementary Material - IEEE ICDM 2026 submission
+%% Supplementary Material - IEEE ICDM 2026 camera-ready paper
 %% Accompanies the main paper:
 %%   "Uncertainty-aware Dependency-based Anomaly Detection with TabPFN"
-%% Submitted for triple-blind review.  No author names or affiliations are included.
 
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
@@ -34,13 +33,20 @@
 
 	\title{Supplementary Material for ``Uncertainty-aware Dependency-based Anomaly Detection with TabPFN''}
 
-	\author{\IEEEauthorblockN{Anonymous Author(s)}
-		\IEEEauthorblockA{Supplementary material for the ICDM 2026 submission\\
-			``Uncertainty-aware Dependency-based Anomaly Detection with TabPFN''}}
+	\author{
+		\IEEEauthorblockN{Sha Lu\IEEEauthorrefmark{1},
+			Jixue Liu\IEEEauthorrefmark{1},
+			Stefan Peters\IEEEauthorrefmark{1},
+			Thuc Duy Le\IEEEauthorrefmark{1},
+			Yongzheng Xie\IEEEauthorrefmark{2},
+			Lin Liu\IEEEauthorrefmark{1}, and
+			Jiuyong Li\IEEEauthorrefmark{1}}
+		\IEEEauthorblockA{\IEEEauthorrefmark{1}Adelaide University, Adelaide, South Australia, Australia}
+		\IEEEauthorblockA{\IEEEauthorrefmark{2}Queen's University Belfast, Belfast, United Kingdom}}
 
 	\maketitle
 
-	\noindent This document provides supplementary material accompanying the main ICDM 2026 submission.
+	\noindent This document provides supplementary material accompanying the paper accepted at the 2026 IEEE International Conference on Data Mining (ICDM 2026).
 	It is organized as follows.
 	Appendix~\ref{app:datasets} provides dataset statistics for all 57 ADBench datasets.
 	Appendix~\ref{app:baselines} describes all 28 baseline methods.
@@ -49,6 +55,7 @@
 	Appendix~\ref{app:results} reports complete per-dataset ROC-AUC and PR-AUC results, pairwise Wilcoxon signed-rank test results, and the Friedman/Nemenyi omnibus rank analysis.
 	Appendix~\ref{app:case} presents a detailed case study on the Wilt dataset.
 	Appendix~\ref{app:sensitivity} reports latent-dimension sensitivity results.
+	Appendix~\ref{app:rcs_sensitivity} reports RCS-budget sensitivity results.
 
 	%% ============================================================
 	%% Appendix A - Dataset Details
@@ -156,7 +163,7 @@
 	uLEAD-TabPFN is designed to minimize hyperparameter tuning. The TabPFN used by uLEAD-TabPFN is kept frozen, and only lightweight components, including a linear encoder and variance networks, are trained. The primary design choice is the latent dimensionality $p$: for datasets with $d \leq 100$, $p$ is set to $d$, while for $d > 100$, it is fixed to $100$. All other parameters are fixed across datasets and seeds.
 	
 	The encoder is trained for 20 epochs using Adam with no weight decay and a batch size of 1024, with the learning rate scheduled from $5\times10^{-4}$ to $10^{-6}$. 
-	For uncertainty-aware scoring, one variance network is trained per latent dimension for 50 epochs using Adam with a learning rate of $10^{-3}$ and weight decay of $10^{-4}$. 
+	For residual-scale normalization, one variance network is trained per latent dimension for 50 epochs using Adam with a learning rate of $10^{-3}$ and weight decay of $10^{-4}$.
 	The RCS budget is set to 500. 
 	The weights of the dependency loss $\lambda_{\mathrm{dep}}$ and the reconstruction loss $\lambda_{\mathrm{rec}}$ are set to 1 and 0.3, respectively.
 	The training and inference procedures are presented in Algorithms~\ref{alg:train_ulead} and~\ref{alg:infer_ulead} in Appendix~\ref{app:pseudocode}.
@@ -211,8 +218,8 @@
 			\State Compute $Z_{\mathcal{B}}\gets\{\mathbf{z}_i=f_\theta(\tilde{\mathbf{x}}_i)\mid \mathbf{x}_i\in\mathcal{B}\}$ and $Z_{\mathcal{C}}\gets\{\mathbf{z}=f_\theta(\tilde{\mathbf{x}})\mid \mathbf{x}\in\mathcal{C}\}$
 			\State $\hat{\mu}_{ij} \gets \mathrm{TabPFNMean}(j;\, \mathbf{z}_{i,-j}, Z_{\mathcal{C}})$ for $\mathbf{x}_i\in\mathcal{B}$
 			\State $\log \hat{\sigma}^2_{ij} \gets v_{\phi_j}(\mathbf{z}_{i,-j})$ for $\mathbf{x}_i\in\mathcal{B}$
-			\State $L_{\mathrm{var}} \gets \frac{1}{|\mathcal{B}|}\sum_{\mathbf{x}_i\in\mathcal{B}}
-			\left[\frac{(z_{ij}-\hat{\mu}_{ij})^2}{\hat{\sigma}^2_{ij}} + \log \hat{\sigma}^2_{ij}\right]$
+			\State $L_{\mathrm{var}} \gets \frac{1}{2|\mathcal{B}|}\sum_{\mathbf{x}_i\in\mathcal{B}}
+			\left[\frac{(z_{ij}-\hat{\mu}_{ij})^2}{\hat{\sigma}^2_{ij}+\epsilon} + \log \hat{\sigma}^2_{ij}\right]$
 			\State Update $\phi_j$ using $L_{\mathrm{var}}$ (encoder and TabPFN frozen)
 			\EndFor
 			\EndFor
@@ -239,7 +246,7 @@
 			\For{$j=1$ to $p$}
 			\State $\hat{\mu}_{j} \gets \mathrm{TabPFNMean}(j;\, \mathbf{z}_{-j}, Z_{\mathcal{C}})$
 			\State $\log \hat{\sigma}^2_{j} \gets v_{\phi_j}(\mathbf{z}_{-j})$
-			\State $s(\mathbf{x}) \gets s(\mathbf{x}) + \frac{(z_{j}-\hat{\mu}_{j})^2}{\hat{\sigma}^2_{j}}$
+			\State $s(\mathbf{x}) \gets s(\mathbf{x}) + \frac{1}{2}\left[\frac{(z_{j}-\hat{\mu}_{j})^2}{\hat{\sigma}^2_{j}+\epsilon}+\log \hat{\sigma}^2_{j}\right]$
 			\EndFor
 			\State $s(\mathbf{x})\gets \frac{1}{p}s(\mathbf{x})$
 			\State \Return $s(\mathbf{x})$
@@ -484,9 +491,9 @@
 	
 	On the Wilt dataset, uLEAD-TabPFN achieves a ROC-AUC of 97.5\% and a PR-AUC of 84.6\%, substantially outperforming existing baseline methods, which typically achieve ROC-AUC values around 60\% and PR-AUC values near 20\%. Relative to the average baseline performance, this corresponds to improvements of 81\% in ROC-AUC and 491\% in PR-AUC.
 	
-	The goal of this case study is to understand why uLEAD-TabPFN performs particularly well on this dataset. To this end, we compare uLEAD-TabPFN with the ablated variants introduced in the ablation study of the main paper. Specifically, uLEAD-Original, which operates directly on the original feature space without latent transformation, achieves 85\% ROC-AUC and 47\% PR-AUC. Replacing TabPFN with a CART-based dependency estimator (uLEAD-CART) obtains 92\% ROC-AUC and 64\% PR-AUC. uLEAD-TabPFN without uncertainty-aware scoring attains similar ROC-AUC (97.4\%) and PR-AUC (86.9\%) to the full model.
+	The goal of this case study is to understand why uLEAD-TabPFN performs particularly well on this dataset. To this end, we compare uLEAD-TabPFN with the ablated variants introduced in the ablation study of the main paper. Specifically, uLEAD-Original, which operates directly on the original feature space without latent transformation, achieves 85\% ROC-AUC and 47\% PR-AUC. Replacing TabPFN with a CART-based dependency estimator (uLEAD-CART) obtains 92\% ROC-AUC and 64\% PR-AUC. uLEAD-TabPFN without residual-scale normalization attains similar ROC-AUC (97.4\%) and PR-AUC (86.9\%) to the full model.
 	
-	These results indicate that the dominant performance gains on the Wilt dataset stem from the representation learning and dependency modeling enabled by TabPFN, while uncertainty-aware scoring plays a less critical role in this particular setting. Consequently, the following analysis focuses on understanding how the latent space transformation contributes to improved anomaly detection performance.
+	These results indicate that the dominant performance gains on the Wilt dataset stem from the representation learning and dependency modeling enabled by TabPFN, while residual-scale normalization plays a less critical role in this particular setting. Consequently, the following analysis focuses on understanding how the latent space transformation contributes to improved anomaly detection performance.
 	
 	\paragraph{Latent Space Analysis.}
 	We first compare feature dependencies in the original and latent spaces using the Pearson correlation coefficient and the conditional coefficient of determination ($R^2$) estimated with TabPFN. Pearson correlation measures pairwise linear dependence, while conditional $R^2$ quantifies how well each feature can be predicted from the remaining features.
@@ -554,25 +561,17 @@
 	
 	
 	\paragraph{Anomaly Interpretation.}
-	uLEAD-TabPFN provides interpretability by design through its explicit dependency-based anomaly scoring mechanism. For a given test sample, the anomaly score is computed as an aggregation of normalized conditional dependency deviations across latent dimensions. Latent dimensions with large contributions correspond to conditional relationships that are unlikely under the learned normal data distribution, making the source of abnormality directly observable at the representation level.
+	uLEAD-TabPFN exposes its dimension-wise conditional Gaussian NLL contributions, each combining a standardized dependency deviation with a conditional log-scale term. For diagnostic interpretation, we separately inspect the standardized-deviation component to identify which conditional relationships are most strongly violated. This residual-based diagnostic does not constitute an exact decomposition of the complete NLL because it excludes the log-scale term.
 	
-	Crucially, the latent representation is obtained via a linear transformation of the original feature space. As a result, dependency deviations detected in the latent space can be directly traced back to the original input features through the encoder weights, enabling faithful feature-level attribution without relying on post-hoc explanation techniques. This interpretability reflects conditional inconsistency rather than marginal outliers: a feature may appear anomalous not because of its absolute value, but because it violates learned dependencies given the remaining features. This aligns the explanation with the underlying detection mechanism of uLEAD-TabPFN.
+	Because the latent representation is linear, the absolute encoder weights provide a transparent heuristic for distributing this latent standardized-deviation evidence over the original input features. The resulting residual-based attribution indicates which inputs are associated with the violated latent relationships, but it is neither a causal attribution nor an exact decomposition of the full NLL, whose conditional mean and scale are nonlinear functions of the latent variables.
 	
-	We analyze a representative top-ranked anomaly from the Wilt dataset to illustrate instance-level interpretability. For this sample, the anomaly score is primarily driven by four out of five latent dimensions. Specifically, latent dimensions $Z_0$, $Z_1$, $Z_2$, and $Z_4$ contribute $41.5$, $43.8$, $39.3$, and $32.9$ to the total anomaly score, respectively, while $Z_3$ contributes only $7$.
-	Figure~\ref{fig:anomaly_attribution} shows the attribution of these latent-space dependency violations back to the original input features. Owing to the linear encoder, the contribution of each original feature to the anomaly score can be explicitly quantified. The strongest attributions correspond to features associated with vegetation condition, such as near-infrared reflectance (Mean-NIR) and panchromatic intensity variation (SD-Pan). Similar attribution patterns are consistently observed across other top-ranked Wilt anomalies.
-
-	\begin{figure}[htbp]
-		\centering
-		\includegraphics[width=\columnwidth]{anomaly_01_attribution.png}
-		\caption{Feature-level attribution of the anomaly score to the five original input features for anomaly~\#1 (highest-ranked Wilt anomaly). Bar heights reflect each feature's contribution to the total anomaly score via the linear encoder.}
-		\label{fig:anomaly_attribution}
-	\end{figure}
+	We analyze a representative top-ranked anomaly from the Wilt dataset to illustrate this diagnostic. Its squared standardized deviations are substantially larger for $Z_0$, $Z_1$, $Z_2$, and $Z_4$ than for $Z_3$ (Table~\ref{tab:anomaly1_latent}). Mapping this evidence through the absolute linear-encoder weights yields the residual-based feature associations reported in Table~\ref{tab:anomaly1_values}; the strongest correspond to near-infrared reflectance (Mean-NIR) and panchromatic intensity variation (SD-Pan).
 	
-	We provide detailed numerical breakdowns for the highest-ranked anomaly (Index: 2361, Score: 75.36). Table~\ref{tab:anomaly1_values} reports the raw feature values, normalized values, and attribution scores for each original feature. Table~\ref{tab:anomaly1_latent} reports the per-latent-dimension analysis, including latent values, predicted conditional means, residuals, conditional variances, negative log-likelihoods, and per-dimension score contributions.
+	We provide a numerical breakdown for the highest-ranked anomaly (Index: 2361). Table~\ref{tab:anomaly1_values} reports its raw and normalized feature values together with the residual-based attribution. Table~\ref{tab:anomaly1_latent} reports the per-dimension conditional quantities. The NLL row includes the conventional constant $\frac{1}{2}\log(2\pi)$, which is omitted from the implemented score because it does not affect rankings; the squared standardized-deviation row isolates the residual component of the NLL.
 
 	\begin{table}[htbp]
 		\centering
-		\caption{Raw values, normalized values, and attribution scores for each original feature of anomaly~\#1 (highest-ranked Wilt anomaly, score: 75.36).}
+		\caption{Raw values, normalized values, and residual-based attribution scores for anomaly~\#1.}
 		\resizebox{1\columnwidth}{!}{
 			\begin{tabular}{lrrrrr}
 				\toprule
@@ -581,7 +580,7 @@
 				Raw Value & 150.181 & 225.000 & 145.682 & 540.500 & 13.908 \\
 				Raw Percentile & 92.4\% & 56.8\% & 86.7\% & 52.8\% & 14.7\% \\
 				Normalized Value & 2.499 & 0.269 & 3.714 & 0.129 & -1.509 \\
-				Attribution Score & 5.181 & 3.649 & 3.978 & 6.193 & 5.240 \\
+				Residual Attribution & 5.181 & 3.649 & 3.978 & 6.193 & 5.240 \\
 				\bottomrule
 			\end{tabular}
 		}
@@ -590,7 +589,7 @@
 
 	\begin{table}[htbp]
 		\centering
-		\caption{Per-latent-dimension analysis for anomaly~\#1: latent values, predicted conditional means, residuals, conditional variances, negative log-likelihoods, and score contributions.}
+		\caption{Per-latent-dimension analysis for anomaly~\#1, including conventional Gaussian NLL values and their squared standardized-deviation components.}
 		\resizebox{1\columnwidth}{!}{
 			\begin{tabular}{lrrrrr}
 				\toprule
@@ -601,15 +600,15 @@
 				Conditional Mean & -0.284 & -2.146 & 0.569 & 0.316 & 2.006 \\
 				Residual & 1.068 & 1.519 & 1.942 & 0.340 & 1.760 \\
 				Conditional Variance & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
-				NLL & 1.489 & 2.072 & 2.805 & 0.977 & 2.467 \\
-				Contribution & 1.140 & 2.306 & 3.771 & 0.116 & 3.096 \\
+				NLL (incl. constant) & 1.489 & 2.072 & 2.805 & 0.977 & 2.467 \\
+				Squared Std. Deviation & 1.140 & 2.306 & 3.771 & 0.116 & 3.096 \\
 				\bottomrule
 			\end{tabular}
 		}
 		\label{tab:anomaly1_latent}
 	\end{table}
 
-	Overall, this case study demonstrates how uLEAD-TabPFN enables transparent, end-to-end interpretation by linking latent dependency violations, uncertainty-aware scoring, and original feature contributions within a unified framework.
+	Overall, this case study links the composite conditional NLL to a residual-based diagnostic of latent dependency violations and their heuristic associations with original features.
 
 	\section{Latent-Dimension Sensitivity}
 	\label{app:sensitivity}
@@ -624,6 +623,17 @@
 	We therefore focus the sensitivity analysis on the primary structural hyperparameter, the latent dimensionality $p$, restricting it to datasets with $d \leq 100$ to avoid confounding the effect of $p$ with the aggressive dimensionality reduction that would be required for datasets with $d > 100$.
 	Figure~\ref{fig:supp_latent_dim} reports the average ROC-AUC and PR-AUC over these datasets as $p$ varies: performance improves rapidly as $p$ increases from small values and stabilizes around $p \approx 40$, with only marginal gains for larger values up to $p = 100$.
 	These results indicate that uLEAD-TabPFN does not require fine-grained tuning of the latent dimensionality and maintains stable performance across a broad range of values.
+
+	\section{RCS-Budget Sensitivity}
+	\label{app:rcs_sensitivity}
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=0.85\columnwidth]{rcs_budget_sensitivity.png}
+		\caption{Sensitivity to the RCS budget under the final evaluation protocol. Increasing the context budget improves PR-AUC but substantially increases training time; the default budget $c=500$ provides a practical trade-off.}
+		\label{fig:supp_rcs_budget}
+	\end{figure}
+
+	Figure~\ref{fig:supp_rcs_budget} reports sensitivity to the RCS budget. Increasing the budget from $c=100$ to $c=1000$ improves PR-AUC from 0.5089 to 0.5545, while ROC-AUC remains stable across the tested budgets, with values of 0.8093, 0.8080, 0.8078, and 0.8071 for $c=100$, $250$, $500$, and $1000$, respectively. However, training time increases sharply from 442.1\,s to 2797.4\,s overall, with the steepest rise between $c=500$ and $c=1000$: doubling the budget more than doubles the training time (1109.8\,s to 2797.4\,s), consistent with the increased cost of in-context TabPFN evaluation over larger context sets. The default budget $c=500$ achieves nearly the same PR-AUC as $c=1000$ (0.5509 vs.\ 0.5545) at substantially lower training cost, providing a practical accuracy-efficiency trade-off.
 
 	\bibliographystyle{IEEEtran}
 	\bibliography{reference}
